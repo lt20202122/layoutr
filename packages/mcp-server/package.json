@@ -1,0 +1,26 @@
+{
+  "name": "@layoutr/mcp-server",
+  "version": "0.1.0",
+  "description": "MCP server for Layoutr — sitemap and wireframe builder",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "layoutr-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "@types/node": "^22"
+  },
+  "files": [
+    "dist"
+  ]
+}
