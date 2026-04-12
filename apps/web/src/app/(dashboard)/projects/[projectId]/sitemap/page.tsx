@@ -1,7 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SitemapEditor from "@/components/sitemap/SitemapEditor";
+import type { Database } from "@/types/database";
 
+type Project = Database["public"]["Tables"]["projects"]["Row"];
+type SitemapNode = Database["public"]["Tables"]["sitemap_nodes"]["Row"];
 type Params = { params: Promise<{ projectId: string }> };
 
 export default async function SitemapPage({ params }: Params) {
@@ -15,7 +18,7 @@ export default async function SitemapPage({ params }: Params) {
     .select("*")
     .eq("id", projectId)
     .eq("user_id", user.id)
-    .single();
+    .single() as { data: Project | null };
 
   if (!project) notFound();
 
@@ -23,7 +26,7 @@ export default async function SitemapPage({ params }: Params) {
     .from("sitemap_nodes")
     .select("*")
     .eq("project_id", projectId)
-    .order("order_index", { ascending: true });
+    .order("order_index", { ascending: true }) as { data: SitemapNode[] | null };
 
   return (
     <div className="space-y-6">

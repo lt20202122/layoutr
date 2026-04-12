@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import CreateProjectButton from "@/components/ui/CreateProjectButton";
+import type { Database } from "@/types/database";
+
+type Project = Database["public"]["Tables"]["projects"]["Row"];
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -10,7 +13,7 @@ export default async function DashboardPage() {
     .from("projects")
     .select("*")
     .eq("user_id", user!.id)
-    .order("updated_at", { ascending: false });
+    .order("updated_at", { ascending: false }) as { data: Project[] | null };
 
   return (
     <div className="space-y-8">
