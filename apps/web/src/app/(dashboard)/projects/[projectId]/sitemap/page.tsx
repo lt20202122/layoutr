@@ -26,7 +26,7 @@ export default async function SitemapPage({ params }: Params) {
     .from("sitemap_nodes")
     .select("*")
     .eq("project_id", projectId)
-    .order("order_index", { ascending: true }) as { data: SitemapNode[] | null };
+    .order("order_index", { ascending: true }) as unknown as { data: SitemapNode[] | null };
 
   return (
     <div className="space-y-6">

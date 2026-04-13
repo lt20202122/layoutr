@@ -11,7 +11,7 @@ export interface SitemapNode {
   order_index: number;
   url_path: string | null;
   notes: string | null;
-  metadata: Record<string, unknown>;
+  metadata: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
   children?: SitemapNode[];
