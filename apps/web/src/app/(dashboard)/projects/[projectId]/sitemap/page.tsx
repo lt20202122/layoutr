@@ -2,9 +2,9 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SitemapEditor from "@/components/sitemap/SitemapEditor";
 import type { Database } from "@/types/database";
+import type { SitemapNode } from "@/components/sitemap/sitemapUtils";
 
 type Project = Database["public"]["Tables"]["projects"]["Row"];
-type SitemapNode = Database["public"]["Tables"]["sitemap_nodes"]["Row"];
 type Params = { params: Promise<{ projectId: string }> };
 
 export default async function SitemapPage({ params }: Params) {
@@ -22,11 +22,14 @@ export default async function SitemapPage({ params }: Params) {
 
   if (!project) notFound();
 
-  const { data: nodes } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: rawNodes } = await supabase
     .from("sitemap_nodes")
     .select("*")
     .eq("project_id", projectId)
-    .order("order_index", { ascending: true }) as unknown as { data: SitemapNode[] | null };
+    .order("order_index", { ascending: true });
+
+  const nodes = (rawNodes ?? []) as unknown as SitemapNode[];
 
   return (
     <div className="space-y-6">
@@ -39,7 +42,7 @@ export default async function SitemapPage({ params }: Params) {
         </div>
       </div>
 
-      <SitemapEditor projectId={projectId} initialNodes={nodes ?? []} />
+      <SitemapEditor projectId={projectId} initialNodes={nodes} />
     </div>
   );
 }
