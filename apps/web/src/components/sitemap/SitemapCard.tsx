@@ -4,20 +4,24 @@ import { useState, useRef, useEffect } from "react";
 import {
   SitemapNode, Section, getSections,
   SECTION_COLOR_MAP, CARD_WIDTH, CARD_SECTION_H, CARD_HEADER_H,
+  CARD_BODY_PAD, CARD_SECTION_GAP,
 } from "./sitemapUtils";
 
 type Props = {
   node: SitemapNode;
   isSelected: boolean;
   isSaving: boolean;
+  collapsed: boolean;
   onSelect: () => void;
-  onAdd: () => void;
+  onCollapse: () => void;
   onDelete: () => void;
+  onAdd: () => void;
   onRename: (label: string) => void;
 };
 
 export default function SitemapCard({
-  node, isSelected, isSaving, onSelect, onAdd, onDelete, onRename,
+  node, isSelected, isSaving, collapsed,
+  onSelect, onCollapse, onDelete, onAdd, onRename,
 }: Props) {
   const sections = getSections(node);
   const [editing, setEditing] = useState(false);
@@ -25,41 +29,79 @@ export default function SitemapCard({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setEditLabel(node.label); }, [node.label]);
-
-  useEffect(() => {
-    if (editing) inputRef.current?.focus();
-  }, [editing]);
+  useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
 
   function commitEdit() {
     setEditing(false);
-    const trimmed = editLabel.trim();
-    if (trimmed && trimmed !== node.label) onRename(trimmed);
+    const t = editLabel.trim();
+    if (t && t !== node.label) onRename(t);
     else setEditLabel(node.label);
   }
 
   return (
     <div
-      onClick={onSelect}
       style={{ width: CARD_WIDTH }}
-      className={`relative rounded-xl overflow-hidden cursor-pointer transition-shadow ${
+      className={`relative flex flex-col rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 ${
         isSelected
-          ? "shadow-[0_0_0_2px_#6172f3,0_8px_24px_rgba(97,114,243,0.3)]"
-          : "shadow-[0_0_0_1px_rgba(255,255,255,0.08)] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.2)]"
+          ? "shadow-[0_0_0_2.5px_#6172f3,0_0_28px_rgba(97,114,243,0.35)]"
+          : "shadow-[0_0_0_1px_rgba(255,255,255,0.07)] hover:shadow-[0_0_0_1.5px_rgba(255,255,255,0.15)]"
       }`}
+      onClick={onSelect}
     >
-      {/* Window chrome */}
+      {/* ── Window chrome ── */}
       <div
-        className="flex items-center px-2.5 gap-1.5"
-        style={{ height: CARD_HEADER_H, background: "#243048" }}
+        className="flex items-center gap-2 px-3 shrink-0"
+        style={{ height: CARD_HEADER_H, background: "#1e2d42" }}
       >
-        {/* Traffic dots */}
-        <div className="flex gap-1 shrink-0">
-          <div className="w-2 h-2 rounded-full bg-red-400/70" />
-          <div className="w-2 h-2 rounded-full bg-yellow-400/70" />
-          <div className="w-2 h-2 rounded-full bg-green-400/70" />
+        {/* Traffic lights */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Red — delete */}
+          <button
+            onClick={e => {
+              e.stopPropagation();
+              if (confirm(`Delete "${node.label}" and all its children?`)) onDelete();
+            }}
+            className="w-3 h-3 rounded-full flex items-center justify-center group/dot transition-transform hover:scale-110 active:scale-95"
+            style={{ background: "#ff5f57" }}
+            title="Delete page"
+          >
+            <svg className="opacity-0 group-hover/dot:opacity-100 transition-opacity" width="5" height="5" viewBox="0 0 5 5" fill="none">
+              <path d="M1 1l3 3M4 1L1 4" stroke="white" strokeWidth="1" strokeLinecap="round" />
+            </svg>
+          </button>
+
+          {/* Yellow — collapse */}
+          <button
+            onClick={e => { e.stopPropagation(); onCollapse(); }}
+            className="w-3 h-3 rounded-full flex items-center justify-center group/dot transition-transform hover:scale-110 active:scale-95"
+            style={{ background: "#ffbd2e" }}
+            title={collapsed ? "Expand" : "Collapse"}
+          >
+            {collapsed ? (
+              <svg className="opacity-0 group-hover/dot:opacity-100 transition-opacity" width="5" height="5" viewBox="0 0 5 5" fill="none">
+                <path d="M1 2.5h3M2.5 1v3" stroke="white" strokeWidth="1" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <svg className="opacity-0 group-hover/dot:opacity-100 transition-opacity" width="5" height="5" viewBox="0 0 5 5" fill="none">
+                <path d="M1 2.5h3" stroke="white" strokeWidth="1" strokeLinecap="round" />
+              </svg>
+            )}
+          </button>
+
+          {/* Green — open detail */}
+          <button
+            onClick={e => { e.stopPropagation(); onSelect(); }}
+            className="w-3 h-3 rounded-full flex items-center justify-center group/dot transition-transform hover:scale-110 active:scale-95"
+            style={{ background: "#28c840" }}
+            title="Open details"
+          >
+            <svg className="opacity-0 group-hover/dot:opacity-100 transition-opacity" width="5" height="5" viewBox="0 0 5 5" fill="none">
+              <path d="M1.5 2.5L2.5 3.5L4 1.5" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
         </div>
 
-        {/* Title */}
+        {/* Page title */}
         <div className="flex-1 min-w-0 flex items-center justify-center">
           {editing ? (
             <input
@@ -73,13 +115,11 @@ export default function SitemapCard({
                 e.stopPropagation();
               }}
               onClick={e => e.stopPropagation()}
-              className="w-full text-center bg-transparent border-b border-brand-400 outline-none text-white"
-              style={{ fontSize: "10px" }}
+              className="w-full text-center bg-transparent border-b border-brand-400/60 outline-none text-white text-xs"
             />
           ) : (
             <span
-              className="text-white/90 font-medium truncate max-w-full"
-              style={{ fontSize: "10px" }}
+              className="text-white/85 font-medium text-xs truncate max-w-full select-none"
               onDoubleClick={e => { e.stopPropagation(); setEditing(true); }}
               title="Double-click to rename"
             >
@@ -88,49 +128,82 @@ export default function SitemapCard({
           )}
         </div>
 
-        {/* Action icons */}
-        <div className="flex items-center gap-0.5 shrink-0">
-          {isSaving && (
-            <div
-              className="w-2 h-2 rounded-full border border-brand-400 border-t-transparent animate-spin mr-0.5"
-            />
-          )}
-          <button
-            onClick={e => { e.stopPropagation(); onAdd(); }}
-            title="Add child page"
-            className="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-brand-400 transition-colors rounded"
-          >
-            <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
-              <path d="M4.5 1.5v6M1.5 4.5h6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
-          </button>
-          <button
-            onClick={e => {
-              e.stopPropagation();
-              if (confirm(`Delete "${node.label}" and all children?`)) onDelete();
-            }}
-            title="Delete page"
-            className="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-red-400 transition-colors rounded"
-          >
-            <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
-              <path d="M1.5 2.5h6M3.5 2.5V2h2v.5M3 2.5v4.5h3V2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
+        {/* Saving spinner */}
+        {isSaving && (
+          <div className="w-2.5 h-2.5 rounded-full border-2 border-brand-400 border-t-transparent animate-spin shrink-0" />
+        )}
+
+        {/* Collapsed icon */}
+        {collapsed && (
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-gray-500 shrink-0">
+            <rect x="1.5" y="1" width="9" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+            <path d="M3.5 4h5M3.5 6.5h3" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        )}
       </div>
 
-      {/* Sections */}
-      <div
-        className="flex flex-col gap-px"
-        style={{ background: "#1a2535", padding: "4px 5px 6px" }}
-      >
-        {sections.map((section, i) => (
-          <SectionBlock key={section.id ?? i} section={section} index={i} totalSections={sections.length} />
-        ))}
-      </div>
+      {/* ── Sections (hidden when collapsed) ── */}
+      {!collapsed && (
+        <>
+          <div
+            className="flex flex-col"
+            style={{
+              background: "#151e2d",
+              padding: `${CARD_BODY_PAD}px ${CARD_BODY_PAD}px 0`,
+              gap: CARD_SECTION_GAP,
+            }}
+          >
+            {sections.map((section, i) => (
+              <SectionBlock
+                key={section.id ?? i}
+                section={section}
+                index={i}
+                totalSections={sections.length}
+              />
+            ))}
+          </div>
+
+          {/* ── Add child button ── */}
+          <div
+            className="flex items-center justify-center"
+            style={{
+              background: "#151e2d",
+              padding: `${CARD_BODY_PAD}px`,
+            }}
+          >
+            <button
+              onClick={e => { e.stopPropagation(); onAdd(); }}
+              className="w-full flex items-center justify-center gap-1.5 rounded-lg transition-colors group/add"
+              style={{
+                height: 30,
+                border: "1.5px dashed rgba(155, 89, 182, 0.5)",
+                background: "rgba(155, 89, 182, 0.05)",
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(155,89,182,0.9)";
+                (e.currentTarget as HTMLElement).style.background = "rgba(155,89,182,0.12)";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(155,89,182,0.5)";
+                (e.currentTarget as HTMLElement).style.background = "rgba(155,89,182,0.05)";
+              }}
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <path d="M5 1.5v7M1.5 5h7" stroke="#9b59b6" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+              <span className="text-purple-400/80 group-hover/add:text-purple-300 transition-colors select-none"
+                style={{ fontSize: "9px", fontWeight: 500 }}>
+                Add child page
+              </span>
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
+
+// ─── Section block ───────────────────────────────────────────────────────────
 
 function SectionBlock({
   section, index, totalSections,
@@ -145,56 +218,54 @@ function SectionBlock({
       style={{
         height: CARD_SECTION_H,
         background: bg,
-        borderRadius: isFirst ? "4px 4px 2px 2px" : isLast ? "2px 2px 4px 4px" : "2px",
+        borderRadius: isFirst && isLast ? 8 : isFirst ? "8px 8px 3px 3px" : isLast ? "3px 3px 8px 8px" : 3,
       }}
     >
       {/* Section label */}
       <span
-        className="absolute top-1.5 left-2 text-white/90 font-medium select-none"
-        style={{ fontSize: "8.5px", letterSpacing: "0.02em" }}
+        className="absolute top-2.5 left-3 text-white font-semibold select-none"
+        style={{ fontSize: "11px", letterSpacing: "0.01em", textShadow: "0 1px 2px rgba(0,0,0,0.2)" }}
       >
         {section.label}
       </span>
 
-      {/* Decorative placeholder elements */}
+      {/* Placeholder UI elements */}
       <Placeholders index={index} isFirst={isFirst} isLast={isLast} />
     </div>
   );
 }
 
-function Placeholders({ index, isFirst, isLast }: { index: number; isFirst: boolean; isLast: boolean }) {
+function Placeholders({ isFirst, isLast, index }: { index: number; isFirst: boolean; isLast: boolean }) {
   if (isFirst) {
-    // Header: logo dot + nav links
     return (
-      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          <div className="w-2.5 h-2.5 rounded-full bg-white/40" />
-          <div className="w-4 h-1 rounded-sm bg-white/25" />
+      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <div className="w-4 h-4 rounded-full bg-white/30" />
+          <div className="w-8 h-1.5 rounded-full bg-white/20" />
         </div>
-        <div className="flex gap-1">
-          <div className="w-3 h-0.5 rounded-sm bg-white/30" />
-          <div className="w-3 h-0.5 rounded-sm bg-white/30" />
-          <div className="w-3 h-0.5 rounded-sm bg-white/30" />
+        <div className="flex items-center gap-1.5">
+          <div className="w-6 h-1 rounded-full bg-white/25" />
+          <div className="w-6 h-1 rounded-full bg-white/25" />
+          <div className="w-6 h-1 rounded-full bg-white/25" />
         </div>
       </div>
     );
   }
 
   if (isLast) {
-    // Footer: logo + cols
     return (
-      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-        <div className="w-2 h-2 rounded-full bg-white/35" />
-        <div className="flex gap-2">
-          <div className="flex flex-col gap-0.5">
-            <div className="w-5 h-0.5 rounded-sm bg-white/30" />
-            <div className="w-4 h-0.5 rounded-sm bg-white/20" />
-            <div className="w-5 h-0.5 rounded-sm bg-white/20" />
+      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+        <div className="w-4 h-4 rounded-full bg-white/25" />
+        <div className="flex gap-3">
+          <div className="flex flex-col gap-1">
+            <div className="w-7 h-1 rounded-full bg-white/30" />
+            <div className="w-5 h-1 rounded-full bg-white/20" />
+            <div className="w-7 h-1 rounded-full bg-white/20" />
           </div>
-          <div className="flex flex-col gap-0.5">
-            <div className="w-5 h-0.5 rounded-sm bg-white/30" />
-            <div className="w-4 h-0.5 rounded-sm bg-white/20" />
-            <div className="w-5 h-0.5 rounded-sm bg-white/20" />
+          <div className="flex flex-col gap-1">
+            <div className="w-7 h-1 rounded-full bg-white/30" />
+            <div className="w-5 h-1 rounded-full bg-white/20" />
+            <div className="w-7 h-1 rounded-full bg-white/20" />
           </div>
         </div>
       </div>
@@ -202,41 +273,24 @@ function Placeholders({ index, isFirst, isLast }: { index: number; isFirst: bool
   }
 
   if (index % 3 === 1) {
-    // Hero / image section
     return (
-      <div className="absolute bottom-2 left-2 right-2">
-        <div className="flex items-center gap-1.5 mb-1">
-          <div className="w-3 h-0.5 rounded-sm bg-white/20" />
-          <div className="w-6 h-0.5 rounded-sm bg-white/30" />
-        </div>
-        <div className="flex gap-1 justify-center">
-          <div className="w-1.5 h-1.5 rounded-sm bg-white/20" />
-          <div className="w-1.5 h-1.5 rounded-sm bg-white/35" />
-          <div className="w-1.5 h-1.5 rounded-sm bg-white/20" />
+      <div className="absolute bottom-3 left-3 right-3 flex flex-col gap-1.5">
+        <div className="w-full h-1.5 rounded-full bg-white/20" />
+        <div className="w-4/5 h-1.5 rounded-full bg-white/15" />
+        <div className="flex gap-1.5 mt-0.5">
+          <div className="w-3 h-3 rounded-sm bg-white/20" />
+          <div className="w-3 h-3 rounded-sm bg-white/30" />
+          <div className="w-3 h-3 rounded-sm bg-white/20" />
         </div>
       </div>
     );
   }
 
-  if (index % 3 === 2) {
-    // Grid / highlights
-    return (
-      <div className="absolute bottom-2 left-2 right-2 flex items-end gap-1">
-        <div className="w-2 h-2 rounded-sm bg-white/20" />
-        <div className="flex-1 flex flex-col gap-0.5">
-          <div className="h-0.5 bg-white/25 rounded-sm" />
-          <div className="h-0.5 bg-white/20 rounded-sm w-3/4" />
-        </div>
-      </div>
-    );
-  }
-
-  // CTA / text content
   return (
-    <div className="absolute bottom-2 left-2 right-2 flex flex-col gap-0.5">
-      <div className="h-0.5 bg-white/25 rounded-sm w-full" />
-      <div className="h-0.5 bg-white/20 rounded-sm w-4/5" />
-      <div className="h-1.5 bg-white/20 rounded w-8 mt-0.5" />
+    <div className="absolute bottom-3 left-3 right-3 flex flex-col gap-1.5">
+      <div className="w-full h-1.5 rounded-full bg-white/20" />
+      <div className="w-3/4 h-1.5 rounded-full bg-white/15" />
+      <div className="w-10 h-3 rounded-md bg-white/20 mt-0.5" />
     </div>
   );
 }

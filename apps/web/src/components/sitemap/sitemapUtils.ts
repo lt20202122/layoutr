@@ -25,7 +25,7 @@ export interface SitemapNode {
 }
 
 export const SECTION_COLOR_MAP: Record<SectionColor, string> = {
-  teal:   "#22c9a5",
+  teal:   "#1abc9c",
   blue:   "#3d7ab5",
   navy:   "#2d5a87",
   purple: "#9b59b6",
@@ -54,18 +54,32 @@ export function getSections(node: SitemapNode): Section[] {
   return DEFAULT_SECTIONS;
 }
 
-// ─── Layout ────────────────────────────────────────────────────────────────
+// ─── Card dimensions ────────────────────────────────────────────────────────
+export const CARD_WIDTH       = 224;
+export const CARD_SECTION_H   = 72;
+export const CARD_HEADER_H    = 44;
+export const CARD_ADD_BTN_H   = 46; // "add child" button at bottom
+export const CARD_BODY_PAD    = 8;  // padding around sections
+export const CARD_SECTION_GAP = 4;  // gap between sections
+export const CARD_COLLAPSED_H = 44;
 
-export const CARD_WIDTH = 168;
-export const CARD_SECTION_H = 46;
-export const CARD_HEADER_H = 38;
-export const H_GAP = 52;
-export const V_GAP = 100;
+// ─── Gaps ───────────────────────────────────────────────────────────────────
+export const H_GAP = 60;
+export const V_GAP = 110;
 
-export function cardHeight(sections: Section[]): number {
-  return CARD_HEADER_H + sections.length * CARD_SECTION_H + 10;
+export function cardHeight(sections: Section[], collapsed = false): number {
+  if (collapsed) return CARD_COLLAPSED_H;
+  return (
+    CARD_HEADER_H +
+    CARD_BODY_PAD +
+    sections.length * CARD_SECTION_H +
+    (sections.length - 1) * CARD_SECTION_GAP +
+    CARD_BODY_PAD +
+    CARD_ADD_BTN_H
+  );
 }
 
+// ─── Layout ─────────────────────────────────────────────────────────────────
 export interface NodePosition { x: number; y: number }
 
 function subtreeWidth(node: SitemapNode): number {
@@ -79,26 +93,32 @@ function layoutNode(
   node: SitemapNode,
   cx: number,
   y: number,
-  map: Map<string, NodePosition>
+  map: Map<string, NodePosition>,
+  collapsed: Set<string>
 ) {
   map.set(node.id, { x: cx - CARD_WIDTH / 2, y });
   if (!node.children || node.children.length === 0) return;
+  if (collapsed.has(node.id)) return;
 
-  const ch = cardHeight(getSections(node));
+  const isCollapsed = collapsed.has(node.id);
+  const sections = getSections(node);
+  const ch = cardHeight(sections, isCollapsed);
   const childY = y + ch + V_GAP;
 
   const totalW = node.children.reduce((sum, child, i) =>
     sum + subtreeWidth(child) + (i > 0 ? H_GAP : 0), 0);
-
   let childX = cx - totalW / 2;
   node.children.forEach(child => {
     const sw = subtreeWidth(child);
-    layoutNode(child, childX + sw / 2, childY, map);
+    layoutNode(child, childX + sw / 2, childY, map, collapsed);
     childX += sw + H_GAP;
   });
 }
 
-export function computeLayout(roots: SitemapNode[]): Map<string, NodePosition> {
+export function computeLayout(
+  roots: SitemapNode[],
+  collapsed: Set<string> = new Set()
+): Map<string, NodePosition> {
   const map = new Map<string, NodePosition>();
   const totalW = roots.reduce((sum, r, i) =>
     sum + subtreeWidth(r) + (i > 0 ? H_GAP : 0), 0);
@@ -106,7 +126,7 @@ export function computeLayout(roots: SitemapNode[]): Map<string, NodePosition> {
   let x = -totalW / 2;
   roots.forEach(root => {
     const sw = subtreeWidth(root);
-    layoutNode(root, x + sw / 2, 0, map);
+    layoutNode(root, x + sw / 2, 0, map, collapsed);
     x += sw + H_GAP;
   });
   return map;
