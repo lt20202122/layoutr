@@ -1,9 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import CreateProjectButton from "@/components/ui/CreateProjectButton";
-import type { Database } from "@/types/database";
-
-type Project = Database["public"]["Tables"]["projects"]["Row"];
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -13,7 +10,7 @@ export default async function DashboardPage() {
     .from("projects")
     .select("*")
     .eq("user_id", user!.id)
-    .order("updated_at", { ascending: false }) as { data: Project[] | null };
+    .order("updated_at", { ascending: false });
 
   return (
     <div className="space-y-8">
@@ -44,7 +41,8 @@ export default async function DashboardPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {projects.map((project) => (
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          {projects.map((project: any) => (
             <Link
               key={project.id}
               href={`/projects/${project.id}/sitemap`}

@@ -1,8 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import ApiKeysManager from "@/components/ui/ApiKeysManager";
-import type { Database } from "@/types/database";
-
-type ApiKey = Pick<Database["public"]["Tables"]["api_keys"]["Row"], "id" | "name" | "key_prefix" | "created_at" | "last_used_at" | "expires_at">;
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -12,7 +9,7 @@ export default async function SettingsPage() {
     .from("api_keys")
     .select("id, name, key_prefix, created_at, last_used_at, expires_at")
     .eq("user_id", user!.id)
-    .order("created_at", { ascending: false }) as { data: ApiKey[] | null };
+    .order("created_at", { ascending: false });
 
   return (
     <div className="max-w-2xl space-y-8">
@@ -37,7 +34,8 @@ export default async function SettingsPage() {
           </p>
         </div>
 
-        <ApiKeysManager initialKeys={keys ?? []} />
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <ApiKeysManager initialKeys={(keys ?? []) as any} />
       </section>
 
       <section className="space-y-4 pt-4 border-t border-gray-800">
