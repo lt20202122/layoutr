@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { ok, err, authenticate, slugify } from "@/lib/api";
 
 const UpdateProjectSchema = z.object({
@@ -10,7 +10,7 @@ const UpdateProjectSchema = z.object({
 
 type Params = { params: Promise<{ projectId: string }> };
 
-async function getProject(supabase: Awaited<ReturnType<typeof createClient>>, projectId: string, userId: string) {
+async function getProject(supabase: Awaited<ReturnType<typeof createServiceClient>>, projectId: string, userId: string) {
   const { data, error } = await supabase
     .from("projects")
     .select("*")
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   if (!auth) return err("Unauthorized", 401);
 
   const { projectId } = await params;
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
   const project = await getProject(supabase, projectId, auth.userId);
   if (!project) return err("Project not found", 404);
 
@@ -43,7 +43,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const parsed = UpdateProjectSchema.safeParse(body);
   if (!parsed.success) return err(parsed.error.message);
 
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
   const project = await getProject(supabase, projectId, auth.userId);
   if (!project) return err("Project not found", 404);
 
@@ -66,7 +66,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   if (!auth) return err("Unauthorized", 401);
 
   const { projectId } = await params;
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
   const project = await getProject(supabase, projectId, auth.userId);
   if (!project) return err("Project not found", 404);
 

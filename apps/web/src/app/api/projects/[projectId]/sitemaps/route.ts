@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { ok, err, authenticate } from "@/lib/api";
 
 const NodeTypeEnum = z.enum(["page", "section", "folder", "link", "modal", "component"]);
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   if (!auth) return err("Unauthorized", 401);
 
   const { projectId } = await params;
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
 
   const owns = await assertProjectOwner(supabase, projectId, auth.userId);
   if (!owns) return err("Project not found", 404);
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   const parsed = CreateNodeSchema.safeParse(body);
   if (!parsed.success) return err(parsed.error.message);
 
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
   const owns = await assertProjectOwner(supabase, projectId, auth.userId);
   if (!owns) return err("Project not found", 404);
 

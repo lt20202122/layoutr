@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { ok, err, authenticate, slugify } from "@/lib/api";
 
 const CreateProjectSchema = z.object({
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const auth = await authenticate(request);
   if (!auth) return err("Unauthorized", 401);
 
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
   const { data, error } = await supabase
     .from("projects")
     .select("*")
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   const { name, description } = parsed.data;
   const slug = slugify(name);
 
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
   const { data, error } = await supabase
     .from("projects")
     .insert({ user_id: auth.userId, name, description, slug })
