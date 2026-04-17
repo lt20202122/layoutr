@@ -1,8 +1,19 @@
 import Link from "next/link";
 
+const DEV_MODE = process.env.NEXT_PUBLIC_DEV_BYPASS === "true";
+
 export default function LandingPage() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-24">
+      {DEV_MODE && (
+        <div className="fixed top-0 left-0 right-0 bg-amber-500/15 border-b border-amber-500/30 text-amber-300 text-xs px-4 py-2 flex items-center gap-4 z-50">
+          <span className="font-bold uppercase tracking-wider text-amber-400">⚠ Dev Mode</span>
+          <span className="text-amber-500/70">Auth disabled</span>
+          <span className="text-amber-500/40">|</span>
+          <Link href="/dashboard" className="hover:text-amber-100 transition-colors font-medium underline underline-offset-2">→ Go to Dashboard</Link>
+          <Link href="/settings" className="hover:text-amber-100 transition-colors font-medium">Settings</Link>
+        </div>
+      )}
       <div className="max-w-3xl w-full text-center space-y-8">
         {/* Logo */}
         <div className="flex items-center justify-center gap-3">
@@ -32,16 +43,16 @@ export default function LandingPage() {
         {/* CTA */}
         <div className="flex items-center justify-center gap-4 flex-wrap">
           <Link
-            href="/auth/signup"
+            href={DEV_MODE ? "/dashboard" : "/auth/signup"}
             className="px-6 py-3 bg-brand-600 hover:bg-brand-500 rounded-lg font-semibold transition-colors"
           >
-            Get started free
+            {DEV_MODE ? "Open Dashboard" : "Get started free"}
           </Link>
           <Link
-            href="/auth/login"
+            href={DEV_MODE ? "/settings" : "/auth/login"}
             className="px-6 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg font-semibold transition-colors"
           >
-            Sign in
+            {DEV_MODE ? "Settings" : "Sign in"}
           </Link>
         </div>
 
