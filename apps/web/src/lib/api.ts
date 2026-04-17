@@ -41,9 +41,14 @@ export async function authenticate(request: Request) {
   // Fall back to Supabase session
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (user) return { userId: user.id };
 
-  return { userId: user.id };
+  // Dev bypass — use pre-created dev user when auth is disabled
+  if (process.env.NEXT_PUBLIC_DEV_BYPASS === "true" && process.env.DEV_USER_ID) {
+    return { userId: process.env.DEV_USER_ID };
+  }
+
+  return null;
 }
 
 export function slugify(text: string) {
