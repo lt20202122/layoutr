@@ -6,11 +6,14 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: projects } = await supabase
+  const projectsQuery = supabase
     .from("projects")
     .select("*")
-    .eq("user_id", user!.id)
     .order("updated_at", { ascending: false });
+
+  if (user) projectsQuery.eq("user_id", user.id);
+
+  const { data: projects } = await projectsQuery;
 
   return (
     <div className="space-y-8">

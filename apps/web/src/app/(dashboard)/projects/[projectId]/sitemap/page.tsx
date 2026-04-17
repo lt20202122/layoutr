@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SitemapEditor from "@/components/sitemap/SitemapEditor";
 import type { SitemapNode } from "@/components/sitemap/sitemapUtils";
@@ -9,14 +9,15 @@ export default async function SitemapPage({ params }: Params) {
   const { projectId } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
-  const { data: project } = await supabase
+  const projectQuery = supabase
     .from("projects")
     .select("*")
-    .eq("id", projectId)
-    .eq("user_id", user.id)
-    .single();
+    .eq("id", projectId);
+
+  if (user) projectQuery.eq("user_id", user.id);
+
+  const { data: project } = await projectQuery.single();
 
   if (!project) notFound();
 

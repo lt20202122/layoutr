@@ -5,11 +5,14 @@ export default async function SettingsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: keys } = await supabase
+  const keysQuery = supabase
     .from("api_keys")
     .select("id, name, key_prefix, created_at, last_used_at, expires_at")
-    .eq("user_id", user!.id)
     .order("created_at", { ascending: false });
+
+  if (user) keysQuery.eq("user_id", user.id);
+
+  const { data: keys } = await keysQuery;
 
   return (
     <div className="max-w-2xl space-y-8">
