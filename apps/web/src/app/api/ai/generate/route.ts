@@ -66,7 +66,7 @@ type ProviderKey = "anthropic" | "openai" | "google" | "groq" | "deepseek";
 // Internal enum IDs use dashes; map to actual API model IDs where they differ
 const MODEL_ID_MAP: Record<string, string> = {
   "gemini-2-0-flash":  "gemini-2.5-flash-preview-04-17",
-  "claude-sonnet-3-7": "claude-3-7-sonnet-20250219",
+  "claude-sonnet-3-7": "claude-3-5-sonnet-20241022",
 };
 
 function resolveModelId(model: string): string {
