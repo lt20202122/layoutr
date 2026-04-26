@@ -34,7 +34,7 @@ const MODEL_CREDITS: Record<string, number> = {
 };
 
 const MODEL_ID_MAP: Record<string, string> = {
-  "gemini-2-0-flash":  "gemini-3-flash-preview",
+  "gemini-2-0-flash":  "gemini-1.5-flash",
   "claude-sonnet-4-5": "claude-sonnet-4-5",
   "claude-opus-4-7":   "claude-opus-4-7",
 };

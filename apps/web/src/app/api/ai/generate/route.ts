@@ -9,6 +9,7 @@ import { createDeepSeek } from "@ai-sdk/deepseek";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ok, err, authenticate } from "@/lib/api";
 import { decryptKey } from "@/lib/crypto";
+import { GoogleGenAI } from "@google/genai";
 
 // Singleton default providers (use env-var API keys when no BYOK)
 const defaultAnthropic = createAnthropic();
@@ -68,7 +69,7 @@ type ProviderKey = "anthropic" | "openai" | "google" | "groq" | "deepseek";
 
 // Internal enum IDs use dashes; map to actual API model IDs where they differ
 const MODEL_ID_MAP: Record<string, string> = {
-  "gemini-2-0-flash":  "gemini-2.0-flash",
+  "gemini-2-0-flash":  "gemini-1.5-flash",
   "claude-sonnet-4-5": "claude-sonnet-4-5",
   "claude-opus-4-7":   "claude-opus-4-7",
 };
@@ -220,20 +221,41 @@ export async function POST(request: NextRequest) {
   let actualCost = minRequired;
 
   try {
-    const llmModel = buildModel(provider as ProviderKey, model, byokKey);
     const systemPrompt =
       target === "sitemap"
         ? buildSitemapSystemPrompt(existingItems)
         : buildWireframeSystemPrompt(existingItems);
 
-    const { text, usage } = await generateText({
-      model: llmModel,
-      system: systemPrompt,
-      prompt,
-    });
-    llmResult = text;
-    if (!byokKey) {
-      actualCost = computeCreditCost(model, usage.totalTokens ?? 0);
+    if (provider === "google") {
+      const resolvedModel = resolveModelId(model);
+      const ai = new GoogleGenAI({
+        apiKey: byokKey || process.env.GOOGLE_GENERATIVE_AI_API_KEY || "",
+      });
+
+      const response = await ai.models.generateContent({
+        model: resolvedModel,
+        contents: prompt,
+        config: {
+          systemInstruction: systemPrompt,
+        },
+      });
+
+      llmResult = response.text || "";
+      if (!byokKey) {
+        const totalTokens = (response as any).usageMetadata?.totalTokenCount ?? 1000;
+        actualCost = computeCreditCost(model, totalTokens);
+      }
+    } else {
+      const llmModel = buildModel(provider as ProviderKey, model, byokKey);
+      const { text, usage } = await generateText({
+        model: llmModel,
+        system: systemPrompt,
+        prompt,
+      });
+      llmResult = text;
+      if (!byokKey) {
+        actualCost = computeCreditCost(model, usage.totalTokens ?? 0);
+      }
     }
   } catch (e) {
     const msg = e instanceof Error ? e.message : "LLM call failed";
