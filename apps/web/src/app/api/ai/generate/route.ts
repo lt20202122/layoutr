@@ -144,16 +144,22 @@ export async function POST(request: NextRequest) {
   let creditsRemaining = 0;
 
   if (!byokKey) {
+    // Ensure a profile row exists (handles users created before the signup trigger)
+    await supabase
+      .from("user_profiles")
+      .upsert({ id: auth.userId, credits: 100 }, { onConflict: "id", ignoreDuplicates: true });
+
     const { data: profile } = await supabase
       .from("user_profiles")
       .select("credits")
       .eq("id", auth.userId)
       .single();
 
-    if (!profile || profile.credits < cost) {
-      return err(`Insufficient credits. Need ${cost}, have ${profile?.credits ?? 0}.`, 402);
+    const credits = profile?.credits ?? 0;
+    if (credits < cost) {
+      return err(`Insufficient credits. Need ${cost}, have ${credits}.`, 402);
     }
-    creditsRemaining = profile.credits - cost;
+    creditsRemaining = credits - cost;
   }
 
   // ── Fetch current state ───────────────────────────────────────────────────
