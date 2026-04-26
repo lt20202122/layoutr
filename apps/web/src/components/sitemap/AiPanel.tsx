@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import type { SitemapNode } from "./sitemapUtils";
-import { estimateCredits, formatCreditsUsd, ModelId } from "@/lib/credits";
+import { estimateCredits, ModelId } from "@/lib/credits";
 
 // ─── Three-tier model config ──────────────────────────────────────────────────
 
