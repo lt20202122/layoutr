@@ -11,10 +11,11 @@ type LlmKey = {
 };
 
 const PROVIDERS = [
-  { id: "anthropic", name: "Anthropic", prefix: "sk-ant-" },
-  { id: "openai", name: "OpenAI", prefix: "sk-" },
-  { id: "google", name: "Google", prefix: "" },
-  { id: "groq", name: "Groq", prefix: "gsk_" },
+  { id: "anthropic", name: "Anthropic", prefix: "sk-ant-", tier: "High",   dot: "bg-red-400" },
+  { id: "deepseek",  name: "DeepSeek",  prefix: "sk-",     tier: "Medium", dot: "bg-yellow-400" },
+  { id: "google",    name: "Google",    prefix: "",         tier: "Low",    dot: "bg-green-400" },
+  { id: "openai",    name: "OpenAI",    prefix: "sk-",      tier: "",       dot: "bg-gray-500" },
+  { id: "groq",      name: "Groq",      prefix: "gsk_",    tier: "",       dot: "bg-gray-500" },
 ];
 
 export default function LLMKeysManager() {
@@ -91,9 +92,15 @@ export default function LLMKeysManager() {
           return (
             <div key={provider.id} className="flex items-center justify-between px-4 py-3 bg-gray-900">
               <div className="min-w-0 flex-1">
-                <p className="font-medium text-sm">{provider.name}</p>
+                <div className="flex items-center gap-2">
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${provider.dot}`} />
+                  <p className="font-medium text-sm">{provider.name}</p>
+                  {provider.tier && (
+                    <span className="text-[10px] text-gray-500">{provider.tier}</span>
+                  )}
+                </div>
                 {existingKey ? (
-                  <p className="text-xs text-gray-500 font-mono mt-0.5">
+                  <p className="text-xs text-gray-500 font-mono mt-0.5 ml-3.5">
                     {provider.prefix}{existingKey.key_prefix.slice(provider.prefix.length)}
                   </p>
                 ) : (

@@ -1,30 +1,124 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { SitemapNode } from "./sitemapUtils";
 
-type Model = "claude-haiku-3-5" | "claude-sonnet-3-7" | "gpt-4o-mini" | "gemini-2-0-flash";
+// ─── Three-tier model config ──────────────────────────────────────────────────
 
-const MODEL_LABELS: Record<Model, string> = {
-  "claude-haiku-3-5":   "Haiku 3.5  · 5 cr",
-  "claude-sonnet-3-7":  "Sonnet 3.7 · 15 cr",
-  "gpt-4o-mini":        "GPT-4o mini · 5 cr",
-  "gemini-2-0-flash":   "Gemini Flash · 5 cr",
-};
+type TierId = "gemini-2-0-flash" | "deepseek-chat" | "claude-sonnet-3-7";
 
-const MODEL_PROVIDERS: Record<Model, string> = {
-  "claude-haiku-3-5":  "anthropic",
-  "claude-sonnet-3-7": "anthropic",
-  "gpt-4o-mini":       "openai",
-  "gemini-2-0-flash":  "google",
-};
+interface Tier {
+  id: TierId;
+  tier: "Low" | "Medium" | "High";
+  modelLabel: string;
+  credits: number;
+  provider: "google" | "deepseek" | "anthropic";
+  dot: string; // tailwind bg color class
+}
 
-const MODEL_COST: Record<Model, number> = {
-  "claude-haiku-3-5":   5,
-  "claude-sonnet-3-7":  15,
-  "gpt-4o-mini":        5,
-  "gemini-2-0-flash":   5,
-};
+const TIERS: Tier[] = [
+  {
+    id: "gemini-2-0-flash",
+    tier: "Low",
+    modelLabel: "gemini-2.0-flash",
+    credits: 5,
+    provider: "google",
+    dot: "bg-green-400",
+  },
+  {
+    id: "deepseek-chat",
+    tier: "Medium",
+    modelLabel: "deepseek-chat",
+    credits: 10,
+    provider: "deepseek",
+    dot: "bg-yellow-400",
+  },
+  {
+    id: "claude-sonnet-3-7",
+    tier: "High",
+    modelLabel: "claude-sonnet-3-7",
+    credits: 25,
+    provider: "anthropic",
+    dot: "bg-red-400",
+  },
+];
+
+function getTier(id: TierId): Tier {
+  return TIERS.find((t) => t.id === id)!;
+}
+
+// ─── Custom tier dropdown ─────────────────────────────────────────────────────
+
+function TierDropdown({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: TierId;
+  onChange: (id: TierId) => void;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = getTier(value);
+
+  // Close on outside click
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      {/* Trigger */}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between gap-2 text-xs bg-gray-800 border border-gray-700 rounded-lg px-2.5 py-1.5 text-white hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        <span className="flex items-center gap-2 min-w-0">
+          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${selected.dot}`} />
+          <span className="font-medium">{selected.tier}</span>
+          <span className="text-gray-500 truncate">{selected.modelLabel} · ~{selected.credits} cr</span>
+        </span>
+        <svg
+          className={`w-3 h-3 text-gray-500 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+          viewBox="0 0 12 12"
+          fill="none"
+        >
+          <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {/* Dropdown panel */}
+      {open && (
+        <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-gray-900 border border-gray-700 rounded-xl shadow-xl overflow-hidden">
+          {TIERS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => { onChange(t.id); setOpen(false); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs hover:bg-gray-800 transition-colors text-left ${
+                t.id === value ? "bg-gray-800/60" : ""
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${t.dot}`} />
+              <span className="font-medium text-white w-12 shrink-0">{t.tier}</span>
+              <span className="text-gray-400">{t.modelLabel}</span>
+              <span className="ml-auto text-gray-500 shrink-0">~{t.credits} cr</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main panel ───────────────────────────────────────────────────────────────
 
 interface Props {
   projectId: string;
@@ -34,7 +128,7 @@ interface Props {
 
 export default function AiPanel({ projectId, onNodesUpdated, onGenerating }: Props) {
   const [prompt, setPrompt] = useState("");
-  const [model, setModel] = useState<Model>("claude-haiku-3-5");
+  const [tierId, setTierId] = useState<TierId>("gemini-2-0-flash");
   const [loading, setLoading] = useState(false);
   const [lastResult, setLastResult] = useState<{
     credits_used: number;
@@ -44,6 +138,8 @@ export default function AiPanel({ projectId, onNodesUpdated, onGenerating }: Pro
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const tier = getTier(tierId);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -62,8 +158,8 @@ export default function AiPanel({ projectId, onNodesUpdated, onGenerating }: Pro
           prompt: prompt.trim(),
           project_id: projectId,
           target: "sitemap",
-          model,
-          provider: MODEL_PROVIDERS[model],
+          model: tier.id,
+          provider: tier.provider,
         }),
       });
 
@@ -117,17 +213,10 @@ export default function AiPanel({ projectId, onNodesUpdated, onGenerating }: Pro
 
       {/* Model picker */}
       <div className="px-4 py-2 border-b border-gray-800">
-        <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Model</label>
-        <select
-          id="ai-model-picker"
-          value={model}
-          onChange={(e) => setModel(e.target.value as Model)}
-          className="w-full text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
-        >
-          {(Object.keys(MODEL_LABELS) as Model[]).map((m) => (
-            <option key={m} value={m}>{MODEL_LABELS[m]}</option>
-          ))}
-        </select>
+        <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1.5">
+          Model
+        </label>
+        <TierDropdown value={tierId} onChange={setTierId} disabled={loading} />
       </div>
 
       {/* Chat area */}
@@ -182,7 +271,6 @@ export default function AiPanel({ projectId, onNodesUpdated, onGenerating }: Pro
             ].map((suggestion) => (
               <button
                 key={suggestion}
-                id={`ai-suggestion-${suggestion.slice(0, 20).replace(/\s/g, "-").toLowerCase()}`}
                 onClick={() => setPrompt(suggestion)}
                 className="block w-full text-left text-xs text-gray-400 hover:text-white px-2.5 py-1.5 bg-gray-800/50 hover:bg-gray-800 border border-gray-700/50 rounded-lg transition-all"
               >
@@ -210,10 +298,9 @@ export default function AiPanel({ projectId, onNodesUpdated, onGenerating }: Pro
 
       {/* Input form */}
       <div className="px-4 pb-4 pt-3 border-t border-gray-800">
-        <form id="ai-generate-form" onSubmit={handleSubmit} className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-2">
           <textarea
             ref={textareaRef}
-            id="ai-prompt-input"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             onKeyDown={(e) => {
@@ -225,9 +312,8 @@ export default function AiPanel({ projectId, onNodesUpdated, onGenerating }: Pro
             className="w-full text-xs bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none disabled:opacity-50 transition-opacity"
           />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-gray-600">⌘↵ to send · costs {MODEL_COST[model]} credits</span>
+            <span className="text-[10px] text-gray-600">⌘↵ to send · costs ~{tier.credits} credits</span>
             <button
-              id="ai-generate-btn"
               type="submit"
               disabled={loading || !prompt.trim()}
               className="text-xs px-3 py-1.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg font-semibold transition-all"

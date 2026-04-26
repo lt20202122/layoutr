@@ -5,59 +5,75 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createGroq } from "@ai-sdk/groq";
-
-const anthropic = createAnthropic();
-const openai = createOpenAI();
+import { createDeepSeek } from "@ai-sdk/deepseek";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ok, err, authenticate } from "@/lib/api";
 import { decryptKey } from "@/lib/crypto";
 
-// ─── Schemas ────────────────────────────────────────────────────────────────
+// Singleton default providers (use env-var API keys when no BYOK)
+const defaultAnthropic = createAnthropic();
+const defaultOpenAI = createOpenAI();
+const defaultGoogle = createGoogleGenerativeAI();
+const defaultGroq = createGroq();
+const defaultDeepSeek = createDeepSeek();
+
+// ─── Schemas ─────────────────────────────────────────────────────────────────
 
 const GenerateSchema = z.object({
   prompt: z.string().min(1).max(4000),
   project_id: z.string().uuid(),
   target: z.enum(["sitemap", "wireframe"]),
+  // Three tiers: low / medium / high
   model: z
-    .enum(["claude-haiku-3-5", "claude-sonnet-3-7", "gpt-4o-mini", "gemini-2-0-flash"])
-    .default("claude-haiku-3-5"),
-  provider: z.enum(["anthropic", "openai", "google", "groq"]).default("anthropic"),
+    .enum(["gemini-2-0-flash", "deepseek-chat", "claude-sonnet-3-7"])
+    .default("gemini-2-0-flash"),
+  provider: z.enum(["anthropic", "openai", "google", "groq", "deepseek"]).default("google"),
 });
 
-// ─── Credit cost per model tier ─────────────────────────────────────────────
-// green=5, yellow=15, red=40
+// ─── Credit cost per tier (low=5, medium=10, high=25) ────────────────────────
 
 const MODEL_CREDITS: Record<string, number> = {
-  "claude-haiku-3-5": 5,
-  "gpt-4o-mini": 5,
-  "gemini-2-0-flash": 5,
-  "claude-sonnet-3-7": 15,
+  "gemini-2-0-flash":  5,   // low
+  "deepseek-chat":     10,  // medium
+  "claude-sonnet-3-7": 25,  // high
 };
 
 function creditCost(model: string): number {
-  return MODEL_CREDITS[model] ?? 15;
+  return MODEL_CREDITS[model] ?? 10;
 }
 
-// ─── Provider factory ────────────────────────────────────────────────────────
+// ─── Provider factory ─────────────────────────────────────────────────────────
 
-type ProviderKey = "anthropic" | "openai" | "google" | "groq";
+type ProviderKey = "anthropic" | "openai" | "google" | "groq" | "deepseek";
 
 function buildModel(provider: ProviderKey, model: string, byokKey?: string) {
   switch (provider) {
     case "anthropic":
-      return byokKey ? createAnthropic({ apiKey: byokKey })(model) : anthropic(model);
+      return byokKey
+        ? createAnthropic({ apiKey: byokKey })(model)
+        : defaultAnthropic(model);
     case "openai":
-      return byokKey ? createOpenAI({ apiKey: byokKey })(model) : openai(model);
+      return byokKey
+        ? createOpenAI({ apiKey: byokKey })(model)
+        : defaultOpenAI(model);
     case "google":
-      return byokKey ? createGoogleGenerativeAI({ apiKey: byokKey })(model) : createGoogleGenerativeAI()(model);
+      return byokKey
+        ? createGoogleGenerativeAI({ apiKey: byokKey })(model)
+        : defaultGoogle(model);
     case "groq":
-      return createGroq(byokKey ? { apiKey: byokKey } : {})(model);
+      return byokKey
+        ? createGroq({ apiKey: byokKey })(model)
+        : defaultGroq(model);
+    case "deepseek":
+      return byokKey
+        ? createDeepSeek({ apiKey: byokKey })(model)
+        : defaultDeepSeek(model);
     default:
       throw new Error(`Unknown provider: ${provider}`);
   }
 }
 
-// ─── System prompts ──────────────────────────────────────────────────────────
+// ─── System prompts ───────────────────────────────────────────────────────────
 
 function buildSitemapSystemPrompt(existingNodes: unknown[]): string {
   return `You are a sitemap architect. Given the user's request, return a JSON array of sitemap node operations to create or update.
@@ -83,7 +99,7 @@ ${JSON.stringify(existingBlocks, null, 2)}
 Respond ONLY with a valid JSON array — no markdown, no explanation.`;
 }
 
-// ─── Route handler ───────────────────────────────────────────────────────────
+// ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
   const auth = await authenticate(request);
@@ -96,7 +112,7 @@ export async function POST(request: NextRequest) {
   const { prompt, project_id, target, model, provider } = parsed.data;
   const supabase = createServiceClient();
 
-  // ── Verify project ownership ─────────────────────────────────────────────
+  // ── Verify project ownership ──────────────────────────────────────────────
   const { data: project } = await supabase
     .from("projects")
     .select("id")
@@ -106,7 +122,7 @@ export async function POST(request: NextRequest) {
 
   if (!project) return err("Project not found", 404);
 
-  // ── BYOK check ───────────────────────────────────────────────────────────
+  // ── BYOK check ────────────────────────────────────────────────────────────
   let byokKey: string | undefined;
   const { data: llmKey } = await supabase
     .from("llm_api_keys")
@@ -123,7 +139,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // ── Credit check (skip if BYOK) ──────────────────────────────────────────
+  // ── Credit check (skip if BYOK) ───────────────────────────────────────────
   const cost = creditCost(model);
   let creditsRemaining = 0;
 
@@ -140,7 +156,7 @@ export async function POST(request: NextRequest) {
     creditsRemaining = profile.credits - cost;
   }
 
-  // ── Fetch current state ──────────────────────────────────────────────────
+  // ── Fetch current state ───────────────────────────────────────────────────
   let existingItems: unknown[] = [];
 
   if (target === "sitemap") {
@@ -152,7 +168,7 @@ export async function POST(request: NextRequest) {
     existingItems = nodes ?? [];
   }
 
-  // ── Call LLM ─────────────────────────────────────────────────────────────
+  // ── Call LLM ──────────────────────────────────────────────────────────────
   let llmResult: string;
   try {
     const llmModel = buildModel(provider as ProviderKey, model, byokKey);
@@ -172,23 +188,33 @@ export async function POST(request: NextRequest) {
     return err(`LLM error: ${msg}`, 502);
   }
 
-  // ── Parse LLM response ───────────────────────────────────────────────────
+  // ── Parse LLM response ────────────────────────────────────────────────────
   let operations: Array<{
     action: "create" | "update" | "delete";
-    node?: { label: string; type?: string; parent_label?: string; url_path?: string; notes?: string };
-    block?: { type: string; order_index?: number; props?: Record<string, unknown> };
+    node?: {
+      label: string;
+      type?: string;
+      parent_label?: string;
+      url_path?: string;
+      notes?: string;
+    };
+    block?: {
+      type: string;
+      order_index?: number;
+      props?: Record<string, unknown>;
+    };
   }>;
 
   try {
     // Strip markdown code fences if the LLM wrapped the JSON
     const cleaned = llmResult.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim();
-    operations = JSON.parse(cleaned);
+    operations = JSON.parse(cleaned) as typeof operations;
     if (!Array.isArray(operations)) throw new Error("Expected array");
   } catch {
     return err("LLM returned invalid JSON. Please try again.", 502);
   }
 
-  // ── Apply operations ─────────────────────────────────────────────────────
+  // ── Apply operations ──────────────────────────────────────────────────────
   const labelToId = new Map<string, string>();
   (existingItems as Array<{ id: string; label: string }>).forEach((n) =>
     labelToId.set(n.label, n.id)
@@ -209,7 +235,8 @@ export async function POST(request: NextRequest) {
           .insert({
             project_id,
             label: n.label,
-            type: (n.type as "page" | "section" | "folder" | "link" | "modal" | "component") ?? "page",
+            type:
+              (n.type as "page" | "section" | "folder" | "link" | "modal" | "component") ?? "page",
             parent_id: n.parent_label ? (labelToId.get(n.parent_label) ?? null) : null,
             url_path: n.url_path ?? null,
             notes: n.notes ?? null,
@@ -227,7 +254,9 @@ export async function POST(request: NextRequest) {
           const { data } = await supabase
             .from("sitemap_nodes")
             .update({
-              ...(n.type && { type: n.type as "page" | "section" | "folder" | "link" | "modal" | "component" }),
+              ...(n.type && {
+                type: n.type as "page" | "section" | "folder" | "link" | "modal" | "component",
+              }),
               ...(n.url_path !== undefined && { url_path: n.url_path }),
               ...(n.notes !== undefined && { notes: n.notes }),
             })
@@ -254,7 +283,7 @@ export async function POST(request: NextRequest) {
       .eq("id", auth.userId);
   }
 
-  // ── Fetch updated sitemap ────────────────────────────────────────────────
+  // ── Fetch updated sitemap ─────────────────────────────────────────────────
   const { data: updatedNodes } = await supabase
     .from("sitemap_nodes")
     .select("*")
