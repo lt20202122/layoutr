@@ -46,28 +46,38 @@ function creditCost(model: string): number {
 
 type ProviderKey = "anthropic" | "openai" | "google" | "groq" | "deepseek";
 
+// Internal enum IDs use dashes; map to actual API model IDs where they differ
+const MODEL_ID_MAP: Record<string, string> = {
+  "gemini-2-0-flash": "gemini-2.0-flash",
+};
+
+function resolveModelId(model: string): string {
+  return MODEL_ID_MAP[model] ?? model;
+}
+
 function buildModel(provider: ProviderKey, model: string, byokKey?: string) {
+  const resolvedModel = resolveModelId(model);
   switch (provider) {
     case "anthropic":
       return byokKey
-        ? createAnthropic({ apiKey: byokKey })(model)
-        : defaultAnthropic(model);
+        ? createAnthropic({ apiKey: byokKey })(resolvedModel)
+        : defaultAnthropic(resolvedModel);
     case "openai":
       return byokKey
-        ? createOpenAI({ apiKey: byokKey })(model)
-        : defaultOpenAI(model);
+        ? createOpenAI({ apiKey: byokKey })(resolvedModel)
+        : defaultOpenAI(resolvedModel);
     case "google":
       return byokKey
-        ? createGoogleGenerativeAI({ apiKey: byokKey })(model)
-        : defaultGoogle(model);
+        ? createGoogleGenerativeAI({ apiKey: byokKey })(resolvedModel)
+        : defaultGoogle(resolvedModel);
     case "groq":
       return byokKey
-        ? createGroq({ apiKey: byokKey })(model)
-        : defaultGroq(model);
+        ? createGroq({ apiKey: byokKey })(resolvedModel)
+        : defaultGroq(resolvedModel);
     case "deepseek":
       return byokKey
-        ? createDeepSeek({ apiKey: byokKey })(model)
-        : defaultDeepSeek(model);
+        ? createDeepSeek({ apiKey: byokKey })(resolvedModel)
+        : defaultDeepSeek(resolvedModel);
     default:
       throw new Error(`Unknown provider: ${provider}`);
   }

@@ -133,10 +133,24 @@ export default function WireframeEditor({
     async (e: React.DragEvent) => {
       e.preventDefault();
       setDraggingOver(false);
-      if (!apiBase) return;
+      if (!apiBase || !activeNodeId) return;
 
       const blockType = e.dataTransfer.getData("blockType") as BlockType;
       if (!blockType) return;
+
+      // Optimistic update — show the block immediately before the API responds
+      const tempId = `temp-${Date.now()}`;
+      const optimisticBlock: Block = {
+        id: tempId,
+        node_id: activeNodeId,
+        type: blockType,
+        order_index: blocks.length,
+        props: BLOCK_DEFAULTS[blockType] ?? {},
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      setBlocks((prev) => [...prev, optimisticBlock]);
+      setSelectedBlockId(tempId);
 
       const res = await fetch(apiBase, {
         method: "POST",
@@ -147,12 +161,18 @@ export default function WireframeEditor({
           props: BLOCK_DEFAULTS[blockType] ?? {},
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        // Rollback on failure
+        setBlocks((prev) => prev.filter((b) => b.id !== tempId));
+        setSelectedBlockId(null);
+        return;
+      }
       const { data } = await res.json();
-      setBlocks((prev) => [...prev, data as Block]);
+      // Swap the temp block for the real one
+      setBlocks((prev) => prev.map((b) => (b.id === tempId ? (data as Block) : b)));
       setSelectedBlockId((data as Block).id);
     },
-    [apiBase, blocks.length]
+    [apiBase, activeNodeId, blocks.length]
   );
 
   // ── Block update ───────────────────────────────────────────────────────────
