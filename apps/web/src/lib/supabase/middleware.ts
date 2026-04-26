@@ -34,12 +34,11 @@ export async function updateSession(request: NextRequest) {
   const isApiRoute = request.nextUrl.pathname.startsWith("/api");
   const isPublicRoute = request.nextUrl.pathname === "/";
 
-  // Auth check temporarily disabled — remove this comment to re-enable
-  // if (!user && !isAuthRoute && !isApiRoute && !isPublicRoute) {
-  //   const url = request.nextUrl.clone();
-  //   url.pathname = "/auth/login";
-  //   return NextResponse.redirect(url);
-  // }
+  if (!user && !isAuthRoute && !isApiRoute && !isPublicRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/login";
+    return NextResponse.redirect(url);
+  }
 
   return supabaseResponse;
 }
