@@ -12,6 +12,11 @@ export default async function DashboardLayout({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Fetch credit balance
+  const { data: profile } = user
+    ? await supabase.from("user_profiles").select("credits").eq("id", user.id).single()
+    : { data: null };
+
   // Fetch projects for dev banner quick links
   const { data: projects } = DEV_MODE
     ? await supabase.from("projects").select("id, name").order("updated_at", { ascending: false }).limit(5)
@@ -51,12 +56,14 @@ export default async function DashboardLayout({
             <nav className="flex items-center gap-4 text-sm text-gray-400">
               <Link href="/dashboard" className="hover:text-white transition-colors">Projects</Link>
               <Link href="/settings" className="hover:text-white transition-colors">Settings</Link>
+              <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
             </nav>
           </div>
           <div className="flex items-center gap-3">
             {user ? (
               <>
                 <span className="text-sm text-gray-400">{user.email}</span>
+                <span className="text-xs text-gray-500 font-mono">⚡ {profile?.credits ?? 0} credits</span>
                 <SignOutButton />
               </>
             ) : (

@@ -15,7 +15,7 @@ if (!apiKey) {
 const client = new LayoutrClient(baseUrl, apiKey);
 const server = new McpServer({
   name: "layoutr",
-  version: "0.1.0",
+  version: "0.2.0",
 });
 
 // ─── Projects ──────────────────────────────────────────────────────────────
@@ -196,7 +196,7 @@ server.tool(
   }
 );
 
-// ─── High-level AI tools ───────────────────────────────────────────────────
+// ─── High-level scaffold ────────────────────────────────────────────────────
 
 server.tool(
   "scaffold_sitemap",
@@ -216,10 +216,8 @@ server.tool(
       .describe("List of pages to create"),
   },
   async ({ project_id, pages }) => {
-    // Build label → id map as we create nodes
     const labelToId = new Map<string, string>();
 
-    // First pass: get existing nodes
     const existing = await client.getSitemap(project_id);
     existing.forEach((n) => labelToId.set(n.label, n.id));
 
@@ -244,6 +242,144 @@ server.tool(
           text: `Created ${created.length} nodes:\n${JSON.stringify(created, null, 2)}`,
         },
       ],
+    };
+  }
+);
+
+// ─── Integrated AI ─────────────────────────────────────────────────────────
+
+server.tool(
+  "ai_generate",
+  "Use Layoutr's integrated AI to generate or update a sitemap or wireframe from a natural language prompt. Costs credits unless you have a BYOK key configured.",
+  {
+    prompt: z.string().min(1).max(4000).describe("Natural language description of what to build"),
+    project_id: z.string().uuid().describe("Project ID to modify"),
+    target: z.enum(["sitemap", "wireframe"]).describe("What to generate"),
+    model: z
+      .enum(["claude-haiku-3-5", "claude-sonnet-3-7", "gpt-4o-mini", "gemini-2-0-flash"])
+      .optional()
+      .describe("LLM model to use (default: claude-haiku-3-5)"),
+    provider: z
+      .enum(["anthropic", "openai", "google", "groq"])
+      .optional()
+      .describe("LLM provider (default: anthropic)"),
+  },
+  async ({ prompt, project_id, target, model, provider }) => {
+    const result = await client.aiGenerate({ prompt, project_id, target, model, provider });
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  }
+);
+
+// ─── Wireframe blocks ──────────────────────────────────────────────────────
+
+server.tool(
+  "get_wireframe",
+  "Get all wireframe blocks for a specific sitemap node",
+  {
+    project_id: z.string().uuid().describe("Project ID"),
+    node_id: z.string().uuid().describe("Sitemap node ID"),
+  },
+  async ({ project_id, node_id }) => {
+    const blocks = await client.getWireframe(project_id, node_id);
+    return {
+      content: [{ type: "text", text: JSON.stringify(blocks, null, 2) }],
+    };
+  }
+);
+
+server.tool(
+  "create_block",
+  "Add a wireframe block to a sitemap node",
+  {
+    project_id: z.string().uuid().describe("Project ID"),
+    node_id: z.string().uuid().describe("Sitemap node ID"),
+    type: z
+      .enum(["Hero", "Navbar", "Cards", "CTA", "Form", "Footer", "Text", "Image", "Table"])
+      .describe("Block type"),
+    order_index: z.number().int().min(0).optional().describe("Position in the wireframe"),
+    props: z.record(z.unknown()).optional().describe("Block properties (content, alignment, etc.)"),
+  },
+  async ({ project_id, node_id, ...block }) => {
+    const result = await client.createBlock(project_id, node_id, block);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+);
+
+server.tool(
+  "update_block",
+  "Update a wireframe block's type or properties",
+  {
+    project_id: z.string().uuid().describe("Project ID"),
+    node_id: z.string().uuid().describe("Sitemap node ID"),
+    block_id: z.string().uuid().describe("Block ID to update"),
+    type: z
+      .enum(["Hero", "Navbar", "Cards", "CTA", "Form", "Footer", "Text", "Image", "Table"])
+      .optional(),
+    order_index: z.number().int().min(0).optional(),
+    props: z.record(z.unknown()).optional().describe("Updated block properties"),
+  },
+  async ({ project_id, node_id, block_id, ...updates }) => {
+    const result = await client.updateBlock(project_id, node_id, block_id, updates);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+);
+
+server.tool(
+  "delete_block",
+  "Remove a wireframe block from a node",
+  {
+    project_id: z.string().uuid().describe("Project ID"),
+    node_id: z.string().uuid().describe("Sitemap node ID"),
+    block_id: z.string().uuid().describe("Block ID to delete"),
+  },
+  async ({ project_id, node_id, block_id }) => {
+    const result = await client.deleteBlock(project_id, node_id, block_id);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+);
+
+// ─── Design system ─────────────────────────────────────────────────────────
+
+server.tool(
+  "get_design_system",
+  "Fetch the design system tokens for a project (colors, typography, spacing, etc.)",
+  {
+    project_id: z.string().uuid().describe("Project ID"),
+  },
+  async ({ project_id }) => {
+    const ds = await client.getDesignSystem(project_id);
+    return {
+      content: [{ type: "text", text: JSON.stringify(ds, null, 2) }],
+    };
+  }
+);
+
+server.tool(
+  "update_design_system",
+  "Update the design system tokens for a project",
+  {
+    project_id: z.string().uuid().describe("Project ID"),
+    tokens: z
+      .record(z.unknown())
+      .describe("Design tokens object (e.g. { colors: { primary: '#...' }, fonts: { body: '...' } })"),
+  },
+  async ({ project_id, tokens }) => {
+    const ds = await client.updateDesignSystem(project_id, tokens);
+    return {
+      content: [{ type: "text", text: JSON.stringify(ds, null, 2) }],
     };
   }
 );

@@ -30,7 +30,8 @@ export class LayoutrClient {
     return json.data as T;
   }
 
-  // Projects
+  // ── Projects ──────────────────────────────────────────────────────────────
+
   listProjects() {
     return this.request<Project[]>("GET", "/api/projects");
   }
@@ -51,7 +52,8 @@ export class LayoutrClient {
     return this.request<{ deleted: boolean }>("DELETE", `/api/projects/${projectId}`);
   }
 
-  // Sitemap nodes
+  // ── Sitemap nodes ─────────────────────────────────────────────────────────
+
   getSitemap(projectId: string) {
     return this.request<SitemapNode[]>("GET", `/api/projects/${projectId}/sitemaps`);
   }
@@ -74,7 +76,66 @@ export class LayoutrClient {
       `/api/projects/${projectId}/sitemaps/${nodeId}`
     );
   }
+
+  // ── AI Generate ───────────────────────────────────────────────────────────
+
+  aiGenerate(input: AiGenerateInput) {
+    return this.request<AiGenerateResult>("POST", "/api/ai/generate", input);
+  }
+
+  // ── Wireframe blocks ──────────────────────────────────────────────────────
+
+  getWireframe(projectId: string, nodeId: string) {
+    return this.request<WireframeBlock[]>(
+      "GET",
+      `/api/projects/${projectId}/wireframes/${nodeId}`
+    );
+  }
+
+  createBlock(projectId: string, nodeId: string, block: CreateBlockInput) {
+    return this.request<WireframeBlock>(
+      "POST",
+      `/api/projects/${projectId}/wireframes/${nodeId}`,
+      block
+    );
+  }
+
+  updateBlock(
+    projectId: string,
+    nodeId: string,
+    blockId: string,
+    updates: UpdateBlockInput
+  ) {
+    return this.request<WireframeBlock>(
+      "PATCH",
+      `/api/projects/${projectId}/wireframes/${nodeId}/${blockId}`,
+      updates
+    );
+  }
+
+  deleteBlock(projectId: string, nodeId: string, blockId: string) {
+    return this.request<{ deleted: boolean }>(
+      "DELETE",
+      `/api/projects/${projectId}/wireframes/${nodeId}/${blockId}`
+    );
+  }
+
+  // ── Design system ─────────────────────────────────────────────────────────
+
+  getDesignSystem(projectId: string) {
+    return this.request<DesignSystem>("GET", `/api/projects/${projectId}/design-system`);
+  }
+
+  updateDesignSystem(projectId: string, tokens: Record<string, unknown>) {
+    return this.request<DesignSystem>(
+      "PATCH",
+      `/api/projects/${projectId}/design-system`,
+      { tokens }
+    );
+  }
 }
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface Project {
   id: string;
@@ -113,3 +174,44 @@ export interface CreateNodeInput {
 }
 
 export type UpdateNodeInput = Partial<CreateNodeInput>;
+
+export interface WireframeBlock {
+  id: string;
+  node_id: string;
+  type: string;
+  order_index: number;
+  props: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateBlockInput {
+  type: "Hero" | "Navbar" | "Cards" | "CTA" | "Form" | "Footer" | "Text" | "Image" | "Table";
+  order_index?: number;
+  props?: Record<string, unknown>;
+}
+
+export type UpdateBlockInput = Partial<CreateBlockInput>;
+
+export interface DesignSystem {
+  id?: string;
+  project_id: string;
+  tokens: Record<string, unknown>;
+  updated_at?: string;
+}
+
+export interface AiGenerateInput {
+  prompt: string;
+  project_id: string;
+  target: "sitemap" | "wireframe";
+  model?: "claude-haiku-3-5" | "claude-sonnet-3-7" | "gpt-4o-mini" | "gemini-2-0-flash";
+  provider?: "anthropic" | "openai" | "google" | "groq";
+}
+
+export interface AiGenerateResult {
+  nodes: SitemapNode[];
+  operations_applied: number;
+  credits_used: number;
+  credits_remaining: number | null;
+  byok: boolean;
+}

@@ -1,11 +1,10 @@
 {
-  "name": "@layoutr/mcp-server",
-  "version": "0.2.0",
-  "description": "MCP server for Layoutr — sitemap and wireframe builder",
+  "name": "@layoutr/cli",
+  "version": "0.1.0",
+  "description": "CLI for Layoutr — inject MCP server config into AI coding agents",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "layoutr-mcp": "dist/index.js",
     "layoutr": "dist/index.js"
   },
   "scripts": {
@@ -18,16 +17,22 @@
     "access": "public"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.4",
-    "zod": "^3.24.1"
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
-    "typescript": "^5.7.2",
-    "@types/node": "^22"
+    "@types/node": "^22",
+    "typescript": "^5.7.2"
   },
   "files": [
     "dist"
   ],
-  "keywords": ["mcp", "layoutr", "sitemap", "wireframe", "ai", "modelcontextprotocol"],
+  "keywords": [
+    "layoutr",
+    "mcp",
+    "cli",
+    "ai",
+    "sitemap",
+    "wireframe"
+  ],
   "license": "MIT"
 }

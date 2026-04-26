@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import ApiKeysManager from "@/components/ui/ApiKeysManager";
+import LLMKeysManager from "@/components/ui/LLMKeysManager";
+import DeleteAccountSection from "@/components/ui/DeleteAccountSection";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -42,8 +44,22 @@ export default async function SettingsPage() {
       </section>
 
       <section className="space-y-4 pt-4 border-t border-gray-800">
+        <div>
+          <h2 className="text-lg font-semibold">AI Provider Keys</h2>
+          <p className="text-gray-400 text-sm mt-1">
+            Configure your LLM API keys for AI-assisted features.
+          </p>
+        </div>
+        <LLMKeysManager />
+      </section>
+
+      <section className="space-y-4 pt-4 border-t border-gray-800">
         <h2 className="text-lg font-semibold">Account</h2>
         <p className="text-gray-400 text-sm">Logged in as <strong>{user?.email}</strong></p>
+      </section>
+
+      <section className="space-y-4 pt-4 border-t border-gray-800">
+        <DeleteAccountSection />
       </section>
     </div>
   );
