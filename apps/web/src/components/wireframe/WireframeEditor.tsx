@@ -51,11 +51,11 @@ const BLOCK_DEFAULTS: Record<BlockType, Record<string, unknown>> = {
 
 // ─── AI tier config (mirrors AiPanel) ────────────────────────────────────────
 
-type TierId = "gemini-2-0-flash" | "deepseek-chat" | "claude-sonnet-3-7";
+type TierId = "gemini-2-0-flash" | "deepseek-chat" | "claude-sonnet-4-5" | "claude-opus-4-7";
 
 interface Tier {
   id: TierId;
-  tier: "Low" | "Medium" | "High";
+  tier: "Low" | "Medium" | "High" | "Max";
   modelLabel: string;
   credits: number;
   provider: "google" | "deepseek" | "anthropic";
@@ -64,8 +64,9 @@ interface Tier {
 
 const TIERS: Tier[] = [
   { id: "gemini-2-0-flash",  tier: "Low",    modelLabel: "gemini-2.0-flash",   credits: 5,  provider: "google",    dot: "bg-green-400" },
-  { id: "deepseek-chat",     tier: "Medium", modelLabel: "deepseek-chat",       credits: 10, provider: "deepseek",  dot: "bg-yellow-400" },
-  { id: "claude-sonnet-3-7", tier: "High",   modelLabel: "claude-sonnet-3-7",   credits: 25, provider: "anthropic", dot: "bg-red-400" },
+  { id: "deepseek-chat",     tier: "Medium", modelLabel: "deepseek-v3",        credits: 10, provider: "deepseek",  dot: "bg-yellow-400" },
+  { id: "claude-sonnet-4-5", tier: "High",   modelLabel: "claude-sonnet-4.5",  credits: 25, provider: "anthropic", dot: "bg-red-400" },
+  { id: "claude-opus-4-7",   tier: "Max",    modelLabel: "claude-opus-4.7",    credits: 60, provider: "anthropic", dot: "bg-purple-400" },
 ];
 
 // ─── Rule-based scaffold ──────────────────────────────────────────────────────

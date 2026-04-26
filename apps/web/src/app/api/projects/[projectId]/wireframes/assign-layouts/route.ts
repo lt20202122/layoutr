@@ -8,6 +8,7 @@ import { createDeepSeek } from "@ai-sdk/deepseek";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ok, err, authenticate } from "@/lib/api";
 import { decryptKey } from "@/lib/crypto";
+import { GoogleGenAI } from "@google/genai";
 
 const defaultAnthropic = createAnthropic();
 const defaultOpenAI = createOpenAI();
@@ -18,7 +19,7 @@ const defaultDeepSeek = createDeepSeek();
 
 const Schema = z.object({
   model: z
-    .enum(["gemini-2-0-flash", "deepseek-chat", "claude-sonnet-3-7"])
+    .enum(["gemini-2-0-flash", "deepseek-chat", "claude-sonnet-4-5", "claude-opus-4-7"])
     .default("gemini-2-0-flash"),
   provider: z
     .enum(["anthropic", "openai", "google", "deepseek"])
@@ -26,14 +27,16 @@ const Schema = z.object({
 });
 
 const MODEL_CREDITS: Record<string, number> = {
-  "gemini-2-0-flash":  5,
-  "deepseek-chat":     10,
-  "claude-sonnet-3-7": 25,
+  "gemini-2-0-flash":  3,
+  "deepseek-chat":     5,
+  "claude-sonnet-4-5": 15,
+  "claude-opus-4-7":   40,
 };
 
 const MODEL_ID_MAP: Record<string, string> = {
-  "gemini-2-0-flash":  "gemini-1.5-flash-latest",
-  "claude-sonnet-3-7": "claude-3-5-sonnet-latest",
+  "gemini-2-0-flash":  "gemini-3-flash-preview",
+  "claude-sonnet-4-5": "claude-sonnet-4-5",
+  "claude-opus-4-7":   "claude-opus-4-7",
 };
 
 function resolveModelId(model: string): string {
@@ -185,13 +188,33 @@ export async function POST(
   // Call LLM
   let llmResult: string;
   try {
-    const llmModel = buildModel(provider as ProviderKey, model, byokKey);
-    const { text } = await generateText({
-      model: llmModel,
-      system: buildSystemPrompt(pageNodes.map((n) => ({ id: n.id, label: n.label, notes: n.notes }))),
-      prompt: `Assign optimal wireframe layouts for all ${pageNodes.length} pages listed above.`,
-    });
-    llmResult = text;
+    const systemPrompt = buildSystemPrompt(
+      pageNodes.map((n) => ({ id: n.id, label: n.label, notes: n.notes }))
+    );
+    const prompt = `Assign optimal wireframe layouts for all ${pageNodes.length} pages listed above.`;
+
+    if (provider === "google") {
+      const resolvedModel = resolveModelId(model);
+      const ai = new GoogleGenAI({
+        apiKey: byokKey || process.env.GOOGLE_GENERATIVE_AI_API_KEY || "",
+      });
+
+      const response = await ai.models.generateContent({
+        model: resolvedModel,
+        systemInstruction: systemPrompt,
+        contents: prompt,
+      });
+
+      llmResult = response.text;
+    } else {
+      const llmModel = buildModel(provider as ProviderKey, model, byokKey);
+      const { text } = await generateText({
+        model: llmModel,
+        system: systemPrompt,
+        prompt,
+      });
+      llmResult = text;
+    }
   } catch (e) {
     const msg = e instanceof Error ? e.message : "LLM call failed";
     return err(`LLM error: ${msg}`, 502);

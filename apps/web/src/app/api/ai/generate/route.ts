@@ -23,11 +23,12 @@ const GenerateSchema = z.object({
   prompt: z.string().min(1).max(4000),
   project_id: z.string().uuid(),
   target: z.enum(["sitemap", "wireframe"]),
-  // Three tiers: low / medium / high
+  // 2026 Tiers
   model: z
-    .enum(["gemini-2-0-flash", "deepseek-chat", "claude-sonnet-3-7"])
+    .enum(["gemini-2-0-flash", "deepseek-chat", "claude-sonnet-4-5", "claude-opus-4-7"])
     .default("gemini-2-0-flash"),
   provider: z.enum(["anthropic", "openai", "google", "groq", "deepseek"]).default("google"),
+  node_id: z.string().uuid().optional(), // Required for wireframe target
 });
 
 // ─── Minimum balance required to start a call (pre-flight check) ─────────────
@@ -35,7 +36,8 @@ const GenerateSchema = z.object({
 const MODEL_MIN_BALANCE: Record<string, number> = {
   "gemini-2-0-flash":  3,
   "deepseek-chat":     5,
-  "claude-sonnet-3-7": 15,
+  "claude-sonnet-4-5": 15,
+  "claude-opus-4-7":   40,
 };
 
 // ─── Credits charged per 1 000 tokens (post-call, based on actual usage) ─────
@@ -47,7 +49,8 @@ const MODEL_MIN_BALANCE: Record<string, number> = {
 const MODEL_RATE_PER_1K: Record<string, number> = {
   "gemini-2-0-flash":  1.0,
   "deepseek-chat":     2.0,
-  "claude-sonnet-3-7": 15.0,
+  "claude-sonnet-4-5": 15.0,
+  "claude-opus-4-7":   45.0,
 };
 
 function minBalanceRequired(model: string): number {
@@ -65,8 +68,9 @@ type ProviderKey = "anthropic" | "openai" | "google" | "groq" | "deepseek";
 
 // Internal enum IDs use dashes; map to actual API model IDs where they differ
 const MODEL_ID_MAP: Record<string, string> = {
-  "gemini-2-0-flash":  "gemini-1.5-flash-latest",
-  "claude-sonnet-3-7": "claude-3-5-sonnet-latest",
+  "gemini-2-0-flash":  "gemini-2.0-flash",
+  "claude-sonnet-4-5": "claude-sonnet-4-5",
+  "claude-opus-4-7":   "claude-opus-4-7",
 };
 
 function resolveModelId(model: string): string {
@@ -138,7 +142,7 @@ export async function POST(request: NextRequest) {
   const parsed = GenerateSchema.safeParse(body);
   if (!parsed.success) return err(parsed.error.message);
 
-  const { prompt, project_id, target, model, provider } = parsed.data;
+  const { prompt, project_id, target, model, provider, node_id } = parsed.data;
   const supabase = createServiceClient();
 
   // ── Verify project ownership ──────────────────────────────────────────────
@@ -201,6 +205,14 @@ export async function POST(request: NextRequest) {
       .eq("project_id", project_id)
       .order("order_index");
     existingItems = nodes ?? [];
+  } else if (target === "wireframe") {
+    if (!node_id) return err("node_id is required for wireframe target");
+    const { data: blocks } = await supabase
+      .from("wireframe_blocks")
+      .select("id, type, order_index, props")
+      .eq("node_id", node_id)
+      .order("order_index");
+    existingItems = blocks ?? [];
   }
 
   // ── Call LLM ──────────────────────────────────────────────────────────────
@@ -344,6 +356,48 @@ export async function POST(request: NextRequest) {
           results.push({ deleted: true, label: n.label });
         }
       }
+    } else if (target === "wireframe" && node_id && op.block) {
+      const b = op.block;
+      if (op.action === "create") {
+        const { data } = await supabase
+          .from("wireframe_blocks")
+          .insert({
+            project_id,
+            node_id,
+            type: b.type,
+            order_index: b.order_index ?? existingItems.length + results.length,
+            props: b.props ?? {},
+          })
+          .select()
+          .single();
+        if (data) results.push(data);
+      } else if (op.action === "update") {
+        // For wireframes, we match by type if no ID, or just take the first of type
+        // Better: LLM should ideally provide ID or order_index, but for now we match by type in existing
+        const existing = (existingItems as Array<{ id: string; type: string }>).find(
+          (x) => x.type === b.type
+        );
+        if (existing) {
+          const { data } = await supabase
+            .from("wireframe_blocks")
+            .update({
+              ...(b.props && { props: b.props }),
+              ...(b.order_index !== undefined && { order_index: b.order_index }),
+            })
+            .eq("id", existing.id)
+            .select()
+            .single();
+          if (data) results.push(data);
+        }
+      } else if (op.action === "delete") {
+        const existing = (existingItems as Array<{ id: string; type: string }>).find(
+          (x) => x.type === b.type
+        );
+        if (existing) {
+          await supabase.from("wireframe_blocks").delete().eq("id", existing.id);
+          results.push({ deleted: true, type: b.type });
+        }
+      }
     }
   }
 
@@ -355,15 +409,27 @@ export async function POST(request: NextRequest) {
       .eq("id", auth.userId);
   }
 
-  // ── Fetch updated sitemap ─────────────────────────────────────────────────
-  const { data: updatedNodes } = await supabase
-    .from("sitemap_nodes")
-    .select("*")
-    .eq("project_id", project_id)
-    .order("order_index");
+  // ── Fetch updated state ──────────────────────────────────────────────────
+  let finalNodes: unknown[] = [];
+  if (target === "sitemap") {
+    const { data: updatedNodes } = await supabase
+      .from("sitemap_nodes")
+      .select("*")
+      .eq("project_id", project_id)
+      .order("order_index");
+    finalNodes = updatedNodes ?? [];
+  } else {
+    const { data: updatedBlocks } = await supabase
+      .from("wireframe_blocks")
+      .select("*")
+      .eq("node_id", node_id)
+      .order("order_index");
+    finalNodes = updatedBlocks ?? [];
+  }
 
   return ok({
-    nodes: updatedNodes ?? [],
+    nodes: target === "sitemap" ? finalNodes : [],
+    blocks: target === "wireframe" ? finalNodes : [],
     operations_applied: results.length,
     credits_used: byokKey ? 0 : actualCost,
     credits_remaining: byokKey ? null : creditsRemaining,
