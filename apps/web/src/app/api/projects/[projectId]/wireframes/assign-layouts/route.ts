@@ -201,11 +201,13 @@ export async function POST(
 
       const response = await ai.models.generateContent({
         model: resolvedModel,
-        systemInstruction: systemPrompt,
         contents: prompt,
+        config: {
+          systemInstruction: systemPrompt,
+        },
       });
 
-      llmResult = response.text;
+      llmResult = response.text || "";
     } else {
       const llmModel = buildModel(provider as ProviderKey, model, byokKey);
       const { text } = await generateText({
