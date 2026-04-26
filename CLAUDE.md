@@ -70,13 +70,13 @@ Users/agents can ask Layoutr's built-in AI to generate or modify sitemaps and wi
 
 ## Credit system
 
-| Tier | Models | Cost |
-|------|--------|------|
-| 🟢 Green | claude-haiku-3-5, gpt-4o-mini, gemini-2-0-flash | 5 credits |
-| 🟡 Yellow | claude-sonnet-3-7 | 15 credits |
-| 🔴 Red | (reserved) | 40 credits |
+| Tier | Model | Price per 1M | Markup | Est. Credits |
+|------|-------|--------------|--------|--------------|
+| Starter | DeepSeek V4 Flash | $0.14 / $0.28 | 1.5x | 3 (Min) |
+| Pro | Claude Sonnet 4.5 | $3.00 / $15.00 | 2.0x | ~300 |
+| Max | GPT-5.5 | $15.00 / $75.00 | 2.0x | ~1,500 |
 
-- 1 credit ≈ $0.001
+- 1 credit = $0.0001 (0.01 cents)
 - BYOK users: zero credits deducted
 - Default provider keys (env vars) used when user has no BYOK key
 

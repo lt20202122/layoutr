@@ -1,7 +1,7 @@
 -- Credits on user_profiles table
 create table user_profiles (
   id        uuid primary key references auth.users(id) on delete cascade,
-  credits   integer not null default 100,
+  credits   integer not null default 2000,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -119,7 +119,7 @@ create or replace function create_user_profile()
 returns trigger as $$
 begin
   insert into user_profiles (id, credits)
-  values (new.id, 100);
+  values (new.id, 2000);
   return new;
 end;
 $$ language plpgsql security definer;

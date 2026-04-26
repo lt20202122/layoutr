@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { formatCreditsUsd } from "@/lib/credits";
 
 export default function CreditsDisplay({ initialCredits }: { initialCredits: number }) {
   const [credits, setCredits] = useState(initialCredits);
@@ -28,8 +29,8 @@ export default function CreditsDisplay({ initialCredits }: { initialCredits: num
   }, []);
 
   return (
-    <span className="text-xs text-gray-500 font-mono">
+    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-900/20 border border-brand-800/40 rounded-full text-xs font-semibold text-brand-300">
       ⚡ {credits} credits
-    </span>
+    </div>
   );
 }

@@ -8,6 +8,7 @@ import { createDeepSeek } from "@ai-sdk/deepseek";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ok, err, authenticate } from "@/lib/api";
 import { decryptKey } from "@/lib/crypto";
+import { computeCredits, MIN_CREDITS, CREDIT_VALUE_USD } from "@/lib/credits";
 import { GoogleGenAI } from "@google/genai";
 
 const defaultAnthropic = createAnthropic();
@@ -19,28 +20,26 @@ const defaultDeepSeek = createDeepSeek();
 
 const Schema = z.object({
   model: z
-    .enum(["gemini-2-0-flash", "deepseek-chat", "claude-sonnet-4-5", "claude-opus-4-7"])
-    .default("gemini-2-0-flash"),
+    .enum(["deepseek-chat", "claude-sonnet-4-5", "gpt-5.5"])
+    .default("deepseek-chat"),
   provider: z
     .enum(["anthropic", "openai", "google", "deepseek"])
-    .default("google"),
+    .default("deepseek"),
 });
 
-const MODEL_CREDITS: Record<string, number> = {
-  "gemini-2-0-flash":  3,
-  "deepseek-chat":     5,
-  "claude-sonnet-4-5": 15,
-  "claude-opus-4-7":   40,
-};
-
 const MODEL_ID_MAP: Record<string, string> = {
-  "gemini-2-0-flash":  "gemini-1.5-flash",
   "claude-sonnet-4-5": "claude-sonnet-4-5",
-  "claude-opus-4-7":   "claude-opus-4-7",
+  "gpt-5.5":           "gpt-5.5",
 };
 
 function resolveModelId(model: string): string {
   return MODEL_ID_MAP[model] ?? model;
+}
+
+function minBalanceRequired(model: string): number {
+  if (model === "deepseek-chat") return MIN_CREDITS;
+  if (model === "claude-sonnet-4-5") return 50;
+  return 300;
 }
 
 // ─── Default props per block type ─────────────────────────────────────────────
@@ -156,12 +155,14 @@ export async function POST(
   }
 
   // Credit check
-  const cost = MODEL_CREDITS[model] ?? 10;
+  const minRequired = minBalanceRequired(model);
+  let currentCredits = 0;
   let creditsRemaining = 0;
+
   if (!byokKey) {
     await supabase
       .from("user_profiles")
-      .upsert({ id: auth.userId, credits: 100 }, { onConflict: "id", ignoreDuplicates: true });
+      .upsert({ id: auth.userId, credits: 2000 }, { onConflict: "id", ignoreDuplicates: true });
 
     const { data: profile } = await supabase
       .from("user_profiles")
@@ -169,9 +170,10 @@ export async function POST(
       .eq("id", auth.userId)
       .single();
 
-    const credits = profile?.credits ?? 0;
-    if (credits < cost) return err(`Insufficient credits. Need ${cost}, have ${credits}.`, 402);
-    creditsRemaining = credits - cost;
+    currentCredits = profile?.credits ?? 0;
+    if (currentCredits < minRequired) {
+      return err(`Insufficient credits. Need at least ${minRequired}, have ${currentCredits}.`, 402);
+    }
   }
 
   // Fetch page-type sitemap nodes
@@ -208,14 +210,31 @@ export async function POST(
       });
 
       llmResult = response.text || "";
+      if (!byokKey) {
+        const usage = (response as any).usageMetadata;
+        const actualCost = computeCredits(
+          model,
+          usage?.promptTokenCount ?? 1000,
+          usage?.candidatesTokenCount ?? 1000
+        );
+        creditsRemaining = Math.max(0, currentCredits - actualCost);
+      }
     } else {
       const llmModel = buildModel(provider as ProviderKey, model, byokKey);
-      const { text } = await generateText({
+      const { text, usage } = await generateText({
         model: llmModel,
         system: systemPrompt,
         prompt,
       });
       llmResult = text;
+      if (!byokKey) {
+        const actualCost = computeCredits(
+          model,
+          (usage as any).promptTokens ?? 0,
+          (usage as any).completionTokens ?? 0
+        );
+        creditsRemaining = Math.max(0, currentCredits - actualCost);
+      }
     }
   } catch (e) {
     const msg = e instanceof Error ? e.message : "LLM call failed";
@@ -279,7 +298,8 @@ export async function POST(
 
   return ok({
     pages_updated: pagesUpdated,
-    credits_used: byokKey ? 0 : cost,
+    credits_used: byokKey ? 0 : currentCredits - creditsRemaining,
+    credits_cost_usd: byokKey ? 0 : (currentCredits - creditsRemaining) * CREDIT_VALUE_USD,
     credits_remaining: byokKey ? null : creditsRemaining,
     byok: !!byokKey,
   });

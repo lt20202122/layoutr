@@ -9,6 +9,7 @@ import { createDeepSeek } from "@ai-sdk/deepseek";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ok, err, authenticate } from "@/lib/api";
 import { decryptKey } from "@/lib/crypto";
+import { computeCredits, MIN_CREDITS, CREDIT_VALUE_USD } from "@/lib/credits";
 import { GoogleGenAI } from "@google/genai";
 
 // Singleton default providers (use env-var API keys when no BYOK)
@@ -26,41 +27,18 @@ const GenerateSchema = z.object({
   target: z.enum(["sitemap", "wireframe"]),
   // 2026 Tiers
   model: z
-    .enum(["gemini-2-0-flash", "deepseek-chat", "claude-sonnet-4-5", "claude-opus-4-7"])
-    .default("gemini-2-0-flash"),
-  provider: z.enum(["anthropic", "openai", "google", "groq", "deepseek"]).default("google"),
+    .enum(["deepseek-chat", "claude-sonnet-4-5", "gpt-5.5"])
+    .default("deepseek-chat"),
+  provider: z.enum(["anthropic", "openai", "google", "groq", "deepseek"]).default("deepseek"),
   node_id: z.string().uuid().optional(), // Required for wireframe target
 });
 
 // ─── Minimum balance required to start a call (pre-flight check) ─────────────
 
-const MODEL_MIN_BALANCE: Record<string, number> = {
-  "gemini-2-0-flash":  3,
-  "deepseek-chat":     5,
-  "claude-sonnet-4-5": 15,
-  "claude-opus-4-7":   40,
-};
-
-// ─── Credits charged per 1 000 tokens (post-call, based on actual usage) ─────
-// Rates include margin over real API costs. 1 credit ≈ $0.001.
-// Gemini Flash: ~$0.10/1M in + $0.40/1M out → ~0.5/1K rate → 1 cr/1K (2x margin)
-// DeepSeek V3:  ~$0.27/1M in + $1.10/1M out → ~0.7/1K rate → 2 cr/1K (3x margin)
-// Claude Sonnet 3.7: ~$3/1M in + $15/1M out → ~9/1K rate → 15 cr/1K (1.7x margin)
-
-const MODEL_RATE_PER_1K: Record<string, number> = {
-  "gemini-2-0-flash":  1.0,
-  "deepseek-chat":     2.0,
-  "claude-sonnet-4-5": 15.0,
-  "claude-opus-4-7":   45.0,
-};
-
 function minBalanceRequired(model: string): number {
-  return MODEL_MIN_BALANCE[model] ?? 5;
-}
-
-function computeCreditCost(model: string, totalTokens: number): number {
-  const rate = MODEL_RATE_PER_1K[model] ?? 2.0;
-  return Math.max(1, Math.ceil((totalTokens / 1000) * rate));
+  if (model === "deepseek-chat") return MIN_CREDITS;
+  if (model === "claude-sonnet-4-5") return 50;
+  return 300; // Safe pre-flight for GPT-5.5
 }
 
 // ─── Provider factory ─────────────────────────────────────────────────────────
@@ -69,9 +47,8 @@ type ProviderKey = "anthropic" | "openai" | "google" | "groq" | "deepseek";
 
 // Internal enum IDs use dashes; map to actual API model IDs where they differ
 const MODEL_ID_MAP: Record<string, string> = {
-  "gemini-2-0-flash":  "gemini-1.5-flash",
   "claude-sonnet-4-5": "claude-sonnet-4-5",
-  "claude-opus-4-7":   "claude-opus-4-7",
+  "gpt-5.5":           "gpt-5.5",
 };
 
 function resolveModelId(model: string): string {
@@ -182,7 +159,7 @@ export async function POST(request: NextRequest) {
     // Ensure a profile row exists (handles users created before the signup trigger)
     await supabase
       .from("user_profiles")
-      .upsert({ id: auth.userId, credits: 100 }, { onConflict: "id", ignoreDuplicates: true });
+      .upsert({ id: auth.userId, credits: 2000 }, { onConflict: "id", ignoreDuplicates: true });
 
     const { data: profile } = await supabase
       .from("user_profiles")
@@ -242,8 +219,12 @@ export async function POST(request: NextRequest) {
 
       llmResult = response.text || "";
       if (!byokKey) {
-        const totalTokens = (response as any).usageMetadata?.totalTokenCount ?? 1000;
-        actualCost = computeCreditCost(model, totalTokens);
+        const usage = (response as any).usageMetadata;
+        actualCost = computeCredits(
+          model,
+          usage?.promptTokenCount ?? 1000,
+          usage?.candidatesTokenCount ?? 1000
+        );
       }
     } else {
       const llmModel = buildModel(provider as ProviderKey, model, byokKey);
@@ -254,7 +235,11 @@ export async function POST(request: NextRequest) {
       });
       llmResult = text;
       if (!byokKey) {
-        actualCost = computeCreditCost(model, usage.totalTokens ?? 0);
+        actualCost = computeCredits(
+          model,
+          (usage as any).promptTokens ?? 0,
+          (usage as any).completionTokens ?? 0
+        );
       }
     }
   } catch (e) {
@@ -454,6 +439,7 @@ export async function POST(request: NextRequest) {
     blocks: target === "wireframe" ? finalNodes : [],
     operations_applied: results.length,
     credits_used: byokKey ? 0 : actualCost,
+    credits_cost_usd: byokKey ? 0 : actualCost * CREDIT_VALUE_USD,
     credits_remaining: byokKey ? null : creditsRemaining,
     byok: !!byokKey,
   });

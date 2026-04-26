@@ -2,52 +2,41 @@
 
 import { useState, useRef, useEffect } from "react";
 import type { SitemapNode } from "./sitemapUtils";
+import { estimateCredits, formatCreditsUsd, ModelId } from "@/lib/credits";
 
 // ─── Three-tier model config ──────────────────────────────────────────────────
 
-type TierId = "gemini-2-0-flash" | "deepseek-chat" | "claude-sonnet-4-5" | "claude-opus-4-7";
+type TierId = ModelId;
 
 interface Tier {
   id: TierId;
-  tier: "Low" | "Medium" | "High" | "Max";
+  tier: "Starter" | "Pro" | "Max";
   modelLabel: string;
-  credits: number;
-  provider: "google" | "deepseek" | "anthropic";
+  provider: "google" | "deepseek" | "anthropic" | "openai";
   dot: string; // tailwind bg color class
   locked?: boolean;
 }
 
 const TIERS: Tier[] = [
   {
-    id: "gemini-2-0-flash",
-    tier: "Low",
-    modelLabel: "gemini-2.0-flash",
-    credits: 5,
-    provider: "google",
+    id: "deepseek-chat",
+    tier: "Starter",
+    modelLabel: "deepseek-v4-flash",
+    provider: "deepseek",
     dot: "bg-green-400",
   },
   {
-    id: "deepseek-chat",
-    tier: "Medium",
-    modelLabel: "deepseek-v3",
-    credits: 10,
-    provider: "deepseek",
-    dot: "bg-yellow-400",
-  },
-  {
     id: "claude-sonnet-4-5",
-    tier: "High",
+    tier: "Pro",
     modelLabel: "claude-sonnet-4.5",
-    credits: 40,
     provider: "anthropic",
     dot: "bg-red-400",
   },
   {
-    id: "claude-opus-4-7",
+    id: "gpt-5.5",
     tier: "Max",
-    modelLabel: "claude-opus-4.7",
-    credits: 60,
-    provider: "anthropic",
+    modelLabel: "gpt-5.5",
+    provider: "openai",
     dot: "bg-purple-400",
     locked: true,
   },
@@ -93,7 +82,9 @@ function TierDropdown({
         <span className="flex items-center gap-2 min-w-0">
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${selected.dot}`} />
           <span className="font-medium">{selected.tier}</span>
-          <span className="text-gray-500 truncate">{selected.modelLabel} · ~{selected.credits} credits</span>
+          <span className="text-gray-500 truncate">
+            {selected.modelLabel} · {estimateCredits(selected.id).label} cr
+          </span>
         </span>
         <svg
           className={`w-3 h-3 text-gray-500 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
@@ -117,9 +108,8 @@ function TierDropdown({
                   setOpen(false);
                 }
               }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs hover:bg-gray-800 transition-colors text-left group relative ${
-                t.id === value ? "bg-gray-800/60" : ""
-              } ${t.locked ? "opacity-50 cursor-not-allowed" : ""}`}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs hover:bg-gray-800 transition-colors text-left group relative ${t.id === value ? "bg-gray-800/60" : ""
+                } ${t.locked ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${t.dot}`} />
               <span className="font-medium text-white w-12 shrink-0 flex items-center gap-1.5">
@@ -132,7 +122,9 @@ function TierDropdown({
                 )}
               </span>
               <span className="text-gray-400">{t.modelLabel}</span>
-              <span className="ml-auto text-gray-500 shrink-0">~{t.credits} credits</span>
+              <span className="ml-auto text-gray-500 shrink-0">
+                {estimateCredits(t.id).label} cr
+              </span>
 
               {t.locked && (
                 <div className="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 w-48 p-2.5 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all scale-95 group-hover:scale-100 z-[60]">
@@ -160,10 +152,11 @@ interface Props {
 
 export default function AiPanel({ projectId, onNodesUpdated, onGenerating }: Props) {
   const [prompt, setPrompt] = useState("");
-  const [tierId, setTierId] = useState<TierId>("gemini-2-0-flash");
+  const [tierId, setTierId] = useState<TierId>("deepseek-chat");
   const [loading, setLoading] = useState(false);
   const [lastResult, setLastResult] = useState<{
     credits_used: number;
+    credits_cost_usd: number;
     credits_remaining: number | null;
     operations_applied: number;
     byok: boolean;
@@ -209,6 +202,7 @@ export default function AiPanel({ projectId, onNodesUpdated, onGenerating }: Pro
       const result = json.data as {
         nodes: SitemapNode[];
         credits_used: number;
+        credits_cost_usd: number;
         credits_remaining: number | null;
         operations_applied: number;
         byok: boolean;
@@ -216,6 +210,7 @@ export default function AiPanel({ projectId, onNodesUpdated, onGenerating }: Pro
 
       setLastResult({
         credits_used: result.credits_used,
+        credits_cost_usd: result.credits_cost_usd,
         credits_remaining: result.credits_remaining,
         operations_applied: result.operations_applied,
         byok: result.byok,
@@ -344,7 +339,9 @@ export default function AiPanel({ projectId, onNodesUpdated, onGenerating }: Pro
             className="w-full text-xs bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none disabled:opacity-50 transition-opacity"
           />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-gray-600">⌘↵ to send · min {tier.credits} credits</span>
+            <span className="text-[10px] text-gray-600">
+              ⌘↵ to send · min {estimateCredits(tier.id).label} cr
+            </span>
             <button
               type="submit"
               disabled={loading || !prompt.trim()}

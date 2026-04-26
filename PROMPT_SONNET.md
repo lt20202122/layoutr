@@ -21,10 +21,10 @@ You are building features for **Layoutr**, an AI-native sitemap and wireframe bu
 2. **Integrated AI** (`/api/ai/generate`) — accepts a natural language prompt, calls an LLM, and makes CRUD changes. Costs credits.
 
 ## Credit System
-- 1 credit = $0.001
+- 1 credit = $0.0001 (0.01 cents)
 - New users get 100 credits (free)
 - Credits are stored in `user_profiles.credits`
-- Deduct credits before each AI call; reject with 402 if balance is 0
+- Deduct credits after each AI call based on actual token usage; reject with 402 if balance is below minimum (3 cr)
 - If the user has a BYOK (bring-your-own-key) LLM key stored, use it instead and do NOT deduct credits
 
 ## Tasks to Implement
@@ -45,8 +45,8 @@ You are building features for **Layoutr**, an AI-native sitemap and wireframe bu
 **Logic:**
 1. Authenticate the request
 2. Check if user has a BYOK key for the requested provider — if yes, use it (no credit deduction)
-3. If no BYOK key, check credit balance — reject with 402 if insufficient
-4. Estimate credit cost based on model tier (green=5, yellow=15, red=40 credits per call)
+3. If no BYOK key, check credit balance — reject with 402 if insufficient (min 3 credits)
+4. Compute credit cost based on actual tokens: `credits = ceil(usd_cost / 0.0001 * markup)`
 5. Call the LLM with a system prompt that includes:
    - The current project's sitemap/wireframe state (fetched from DB)
    - Instructions to respond with a JSON array of node operations (create/update/delete)
