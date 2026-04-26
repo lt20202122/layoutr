@@ -65,8 +65,8 @@ type ProviderKey = "anthropic" | "openai" | "google" | "groq" | "deepseek";
 
 // Internal enum IDs use dashes; map to actual API model IDs where they differ
 const MODEL_ID_MAP: Record<string, string> = {
-  "gemini-2-0-flash":  "gemini-2.5-flash-preview-04-17",
-  "claude-sonnet-3-7": "claude-3-5-sonnet-20241022",
+  "gemini-2-0-flash":  "gemini-2.0-flash-001", // Or newer stable
+  "claude-sonnet-3-7": "claude-3-7-sonnet-20250619",
 };
 
 function resolveModelId(model: string): string {
@@ -256,7 +256,18 @@ export async function POST(request: NextRequest) {
 
   try {
     // Strip markdown code fences if the LLM wrapped the JSON
-    const cleaned = llmResult.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim();
+    // More robust regex: find the first '[' or '{' and the last ']' or '}'
+    let cleaned = llmResult.trim();
+    const firstBracket = Math.min(
+      cleaned.indexOf("[") === -1 ? Infinity : cleaned.indexOf("["),
+      cleaned.indexOf("{") === -1 ? Infinity : cleaned.indexOf("{")
+    );
+    const lastBracket = Math.max(cleaned.lastIndexOf("]"), cleaned.lastIndexOf("}"));
+
+    if (firstBracket !== Infinity && lastBracket !== -1 && lastBracket > firstBracket) {
+      cleaned = cleaned.substring(firstBracket, lastBracket + 1);
+    }
+
     operations = JSON.parse(cleaned) as typeof operations;
     if (!Array.isArray(operations)) throw new Error("Expected array");
   } catch {

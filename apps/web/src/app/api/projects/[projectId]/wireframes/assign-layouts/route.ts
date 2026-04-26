@@ -31,6 +31,15 @@ const MODEL_CREDITS: Record<string, number> = {
   "claude-sonnet-3-7": 25,
 };
 
+const MODEL_ID_MAP: Record<string, string> = {
+  "gemini-2-0-flash":  "gemini-2.0-flash-001",
+  "claude-sonnet-3-7": "claude-3-7-sonnet-20250619",
+};
+
+function resolveModelId(model: string): string {
+  return MODEL_ID_MAP[model] ?? model;
+}
+
 // ─── Default props per block type ─────────────────────────────────────────────
 
 const BLOCK_DEFAULTS: Record<string, Record<string, unknown>> = {
@@ -50,15 +59,16 @@ const BLOCK_DEFAULTS: Record<string, Record<string, unknown>> = {
 type ProviderKey = "anthropic" | "openai" | "google" | "deepseek";
 
 function buildModel(provider: ProviderKey, model: string, byokKey?: string) {
+  const resolvedModel = resolveModelId(model);
   switch (provider) {
     case "anthropic":
-      return byokKey ? createAnthropic({ apiKey: byokKey })(model) : defaultAnthropic(model);
+      return byokKey ? createAnthropic({ apiKey: byokKey })(resolvedModel) : defaultAnthropic(resolvedModel);
     case "openai":
-      return byokKey ? createOpenAI({ apiKey: byokKey })(model) : defaultOpenAI(model);
+      return byokKey ? createOpenAI({ apiKey: byokKey })(resolvedModel) : defaultOpenAI(resolvedModel);
     case "google":
-      return byokKey ? createGoogleGenerativeAI({ apiKey: byokKey })(model) : defaultGoogle(model);
+      return byokKey ? createGoogleGenerativeAI({ apiKey: byokKey })(resolvedModel) : defaultGoogle(resolvedModel);
     case "deepseek":
-      return byokKey ? createDeepSeek({ apiKey: byokKey })(model) : defaultDeepSeek(model);
+      return byokKey ? createDeepSeek({ apiKey: byokKey })(resolvedModel) : defaultDeepSeek(resolvedModel);
     default:
       throw new Error(`Unknown provider: ${provider}`);
   }
@@ -193,10 +203,17 @@ export async function POST(
     blocks: Array<{ type: string; layout: string; order_index: number }>;
   }>;
   try {
-    const cleaned = llmResult
-      .replace(/^```(?:json)?\n?/i, "")
-      .replace(/\n?```$/i, "")
-      .trim();
+    let cleaned = llmResult.trim();
+    const firstBracket = Math.min(
+      cleaned.indexOf("[") === -1 ? Infinity : cleaned.indexOf("["),
+      cleaned.indexOf("{") === -1 ? Infinity : cleaned.indexOf("{")
+    );
+    const lastBracket = Math.max(cleaned.lastIndexOf("]"), cleaned.lastIndexOf("}"));
+
+    if (firstBracket !== Infinity && lastBracket !== -1 && lastBracket > firstBracket) {
+      cleaned = cleaned.substring(firstBracket, lastBracket + 1);
+    }
+
     assignments = JSON.parse(cleaned);
     if (!Array.isArray(assignments)) throw new Error("Expected array");
   } catch {
