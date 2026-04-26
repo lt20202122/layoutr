@@ -109,7 +109,7 @@ function TierDropdown({
               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${t.dot}`} />
               <span className="font-medium text-white w-12 shrink-0">{t.tier}</span>
               <span className="text-gray-400">{t.modelLabel}</span>
-              <span className="ml-auto text-gray-500 shrink-0">{t.credits} cr/1K tokens</span>
+              <span className="ml-auto text-gray-500 shrink-0">~{t.credits} credits</span>
             </button>
           ))}
         </div>
@@ -312,7 +312,7 @@ export default function AiPanel({ projectId, onNodesUpdated, onGenerating }: Pro
             className="w-full text-xs bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none disabled:opacity-50 transition-opacity"
           />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-gray-600">⌘↵ to send · billed by tokens used</span>
+            <span className="text-[10px] text-gray-600">⌘↵ to send · min {tier.credits} credits</span>
             <button
               type="submit"
               disabled={loading || !prompt.trim()}
