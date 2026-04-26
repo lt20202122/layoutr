@@ -27,7 +27,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   if (!auth) return err("Unauthorized", 401);
 
   const { projectId } = await params;
-  const supabase = await createServiceClient();
+  const supabase = createServiceClient();
   const project = await getProject(supabase, projectId, auth.userId);
   if (!project) return err("Project not found", 404);
 
@@ -43,7 +43,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const parsed = UpdateProjectSchema.safeParse(body);
   if (!parsed.success) return err(parsed.error.message);
 
-  const supabase = await createServiceClient();
+  const supabase = createServiceClient();
   const project = await getProject(supabase, projectId, auth.userId);
   if (!project) return err("Project not found", 404);
 
@@ -66,7 +66,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   if (!auth) return err("Unauthorized", 401);
 
   const { projectId } = await params;
-  const supabase = await createServiceClient();
+  const supabase = createServiceClient();
   const project = await getProject(supabase, projectId, auth.userId);
   if (!project) return err("Project not found", 404);
 

@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const auth = await authenticate(request);
   if (!auth) return err("Unauthorized", 401);
 
-  const supabase = await createServiceClient();
+  const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("api_keys")
     .select("id, name, key_prefix, created_at, last_used_at, expires_at")
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   const keyHash = createHash("sha256").update(rawKey).digest("hex");
   const keyPrefix = rawKey.slice(0, 12);
 
-  const supabase = await createServiceClient();
+  const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("api_keys")
     .insert({

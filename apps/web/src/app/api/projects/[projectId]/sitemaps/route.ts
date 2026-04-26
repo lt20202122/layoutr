@@ -20,7 +20,7 @@ const CreateNodeSchema = z.object({
 type Params = { params: Promise<{ projectId: string }> };
 
 async function assertProjectOwner(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: Awaited<ReturnType<typeof createServiceClient>>,
   projectId: string,
   userId: string
 ) {
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   if (!auth) return err("Unauthorized", 401);
 
   const { projectId } = await params;
-  const supabase = await createServiceClient();
+  const supabase = createServiceClient();
 
   const owns = await assertProjectOwner(supabase, projectId, auth.userId);
   if (!owns) return err("Project not found", 404);
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   const parsed = CreateNodeSchema.safeParse(body);
   if (!parsed.success) return err(parsed.error.message);
 
-  const supabase = await createServiceClient();
+  const supabase = createServiceClient();
   const owns = await assertProjectOwner(supabase, projectId, auth.userId);
   if (!owns) return err("Project not found", 404);
 

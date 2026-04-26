@@ -40,7 +40,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   if (!auth) return err("Unauthorized", 401);
 
   const { projectId, nodeId } = await params;
-  const supabase = await createServiceClient();
+  const supabase = createServiceClient();
 
   const { data, error } = await supabase
     .from("sitemap_nodes")
@@ -63,7 +63,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const parsed = UpdateNodeSchema.safeParse(body);
   if (!parsed.success) return err(parsed.error.message);
 
-  const supabase = await createServiceClient();
+  const supabase = createServiceClient();
   const owns = await assertNodeOwner(supabase, nodeId, projectId, auth.userId);
   if (!owns) return err("Node not found", 404);
 
@@ -83,7 +83,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   if (!auth) return err("Unauthorized", 401);
 
   const { projectId, nodeId } = await params;
-  const supabase = await createServiceClient();
+  const supabase = createServiceClient();
   const owns = await assertNodeOwner(supabase, nodeId, projectId, auth.userId);
   if (!owns) return err("Node not found", 404);
 

@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 type CookieToSet = { name: string; value: string; options?: Record<string, unknown> };
@@ -30,10 +31,11 @@ export async function createClient() {
   );
 }
 
-export async function createServiceClient() {
-  return createServerClient(
+// Service client uses plain supabase-js (no cookie/session management)
+// so the service role key is used directly in PostgREST, bypassing RLS.
+export function createServiceClient() {
+  return createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { cookies: await getCookieMethods() }
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 }
