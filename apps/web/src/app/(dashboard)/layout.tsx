@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/ui/SignOutButton";
+import CreditsDisplay from "@/components/ui/CreditsDisplay";
 
 const DEV_MODE = process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_DEV_BYPASS === "true";
 
@@ -63,7 +64,7 @@ export default async function DashboardLayout({
             {user ? (
               <>
                 <span className="text-sm text-gray-400">{user.email}</span>
-                <span className="text-xs text-gray-500 font-mono">⚡ {profile?.credits ?? 0} credits</span>
+                <CreditsDisplay initialCredits={profile?.credits ?? 0} />
                 <SignOutButton />
               </>
             ) : (

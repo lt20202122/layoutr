@@ -14,6 +14,7 @@ interface Tier {
   credits: number;
   provider: "google" | "deepseek" | "anthropic";
   dot: string; // tailwind bg color class
+  locked?: boolean;
 }
 
 const TIERS: Tier[] = [
@@ -37,7 +38,7 @@ const TIERS: Tier[] = [
     id: "claude-sonnet-4-5",
     tier: "High",
     modelLabel: "claude-sonnet-4.5",
-    credits: 25,
+    credits: 40,
     provider: "anthropic",
     dot: "bg-red-400",
   },
@@ -48,6 +49,7 @@ const TIERS: Tier[] = [
     credits: 60,
     provider: "anthropic",
     dot: "bg-purple-400",
+    locked: true,
   },
 ];
 
@@ -109,15 +111,37 @@ function TierDropdown({
             <button
               key={t.id}
               type="button"
-              onClick={() => { onChange(t.id); setOpen(false); }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs hover:bg-gray-800 transition-colors text-left ${
+              onClick={() => {
+                if (!t.locked) {
+                  onChange(t.id);
+                  setOpen(false);
+                }
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs hover:bg-gray-800 transition-colors text-left group relative ${
                 t.id === value ? "bg-gray-800/60" : ""
-              }`}
+              } ${t.locked ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${t.dot}`} />
-              <span className="font-medium text-white w-12 shrink-0">{t.tier}</span>
+              <span className="font-medium text-white w-12 shrink-0 flex items-center gap-1.5">
+                {t.tier}
+                {t.locked && (
+                  <svg className="w-2.5 h-2.5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                )}
+              </span>
               <span className="text-gray-400">{t.modelLabel}</span>
               <span className="ml-auto text-gray-500 shrink-0">~{t.credits} credits</span>
+
+              {t.locked && (
+                <div className="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 w-48 p-2.5 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all scale-95 group-hover:scale-100 z-[60]">
+                  <p className="text-[10px] leading-relaxed text-gray-300">
+                    Avaidable at Pro Plan.{" "}
+                    <span className="text-brand-400 underline decoration-brand-400/30">View plans --&gt;</span>
+                  </p>
+                </div>
+              )}
             </button>
           ))}
         </div>

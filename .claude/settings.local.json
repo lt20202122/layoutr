@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npm view:*)",
       "Bash(npm install:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npx tsx:*)",
+      "Bash(ls -la apps/web/.env*)",
+      "Bash(vercel env:*)"
     ]
   }
 }
