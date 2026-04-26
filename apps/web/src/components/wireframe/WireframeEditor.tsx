@@ -39,15 +39,15 @@ interface Props {
 // ─── Default block props ──────────────────────────────────────────────────────
 
 const BLOCK_DEFAULTS: Record<BlockType, Record<string, unknown>> = {
-  Navbar:  { title: "My App", links: ["Home", "About", "Contact"] },
-  Hero:    { headline: "Welcome", subheadline: "Start building something great", cta: "Get Started" },
-  Cards:   { count: 3, title: "Features" },
-  CTA:     { headline: "Ready to start?", cta: "Sign Up Free" },
-  Form:    { fields: ["Name", "Email", "Message"], submitLabel: "Send" },
-  Footer:  { columns: 3, copyright: "© 2024" },
-  Text:    { content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
-  Image:   { alt: "Image placeholder", caption: "" },
-  Table:   { columns: ["Name", "Status", "Date"], rows: 5 },
+  Navbar: { title: "My App", links: ["Home", "About", "Contact"] },
+  Hero: { headline: "Welcome", subheadline: "Start building something great", cta: "Get Started" },
+  Cards: { count: 3, title: "Features" },
+  CTA: { headline: "Ready to start?", cta: "Sign Up Free" },
+  Form: { fields: ["Name", "Email", "Message"], submitLabel: "Send" },
+  Footer: { columns: 3, copyright: "© 2024" },
+  Text: { content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
+  Image: { alt: "Image placeholder", caption: "" },
+  Table: { columns: ["Name", "Status", "Date"], rows: 5 },
 };
 
 // ─── AI tier config (mirrors AiPanel) ────────────────────────────────────────
@@ -58,15 +58,15 @@ interface Tier {
   id: TierId;
   tier: "Starter" | "Pro" | "Max";
   modelLabel: string;
-  provider: "google" | "deepseek" | "anthropic";
+  provider: "google" | "deepseek" | "anthropic" | "openai";
   dot: string;
   locked?: boolean;
 }
 
 const TIERS: Tier[] = [
-  { id: "deepseek-chat",     tier: "Starter", modelLabel: "deepseek-v4-flash", provider: "deepseek",  dot: "bg-green-400" },
-  { id: "claude-sonnet-4-5", tier: "Pro",     modelLabel: "claude-sonnet-4.5", provider: "anthropic", dot: "bg-red-400" },
-  { id: "gpt-5.5",           tier: "Max",     modelLabel: "gpt-5.5",           provider: "openai",    dot: "bg-purple-400", locked: true },
+  { id: "deepseek-chat", tier: "Starter", modelLabel: "deepseek-v4-flash", provider: "deepseek", dot: "bg-green-400" },
+  { id: "claude-sonnet-4-5", tier: "Pro", modelLabel: "claude-sonnet-4.5", provider: "anthropic", dot: "bg-red-400" },
+  { id: "gpt-5.5", tier: "Max", modelLabel: "gpt-5.5", provider: "openai", dot: "bg-purple-400", locked: true },
 ];
 
 // ─── Rule-based scaffold ──────────────────────────────────────────────────────
@@ -78,59 +78,59 @@ function getDefaultBlocksForPage(label: string) {
   if (is(["login", "sign in", "signin", "register", "auth", "signup", "sign up"])) {
     return [
       { type: "Navbar" as BlockType, layout: "minimal" },
-      { type: "Form"   as BlockType, layout: "card" },
+      { type: "Form" as BlockType, layout: "card" },
       { type: "Footer" as BlockType, layout: "centered" },
     ];
   }
   if (is(["contact", "support", "help"])) {
     return [
       { type: "Navbar" as BlockType, layout: "default" },
-      { type: "Hero"   as BlockType, layout: "minimal" },
-      { type: "Form"   as BlockType, layout: "card" },
+      { type: "Hero" as BlockType, layout: "minimal" },
+      { type: "Form" as BlockType, layout: "card" },
       { type: "Footer" as BlockType, layout: "simple" },
     ];
   }
   if (is(["pricing", "plans", "billing"])) {
     return [
       { type: "Navbar" as BlockType, layout: "default" },
-      { type: "Hero"   as BlockType, layout: "minimal" },
-      { type: "Cards"  as BlockType, layout: "grid-3" },
-      { type: "CTA"    as BlockType, layout: "banner" },
+      { type: "Hero" as BlockType, layout: "minimal" },
+      { type: "Cards" as BlockType, layout: "grid-3" },
+      { type: "CTA" as BlockType, layout: "banner" },
       { type: "Footer" as BlockType, layout: "columns" },
     ];
   }
   if (is(["about", "team", "company", "mission"])) {
     return [
       { type: "Navbar" as BlockType, layout: "default" },
-      { type: "Hero"   as BlockType, layout: "split" },
-      { type: "Text"   as BlockType, layout: "two-column" },
-      { type: "Cards"  as BlockType, layout: "grid-2" },
+      { type: "Hero" as BlockType, layout: "split" },
+      { type: "Text" as BlockType, layout: "two-column" },
+      { type: "Cards" as BlockType, layout: "grid-2" },
       { type: "Footer" as BlockType, layout: "columns" },
     ];
   }
   if (is(["blog", "article", "post", "news", "press"])) {
     return [
       { type: "Navbar" as BlockType, layout: "default" },
-      { type: "Hero"   as BlockType, layout: "minimal" },
-      { type: "Text"   as BlockType, layout: "body" },
-      { type: "Cards"  as BlockType, layout: "grid-2" },
+      { type: "Hero" as BlockType, layout: "minimal" },
+      { type: "Text" as BlockType, layout: "body" },
+      { type: "Cards" as BlockType, layout: "grid-2" },
       { type: "Footer" as BlockType, layout: "simple" },
     ];
   }
   if (is(["dashboard", "admin", "analytics", "overview", "app"])) {
     return [
       { type: "Navbar" as BlockType, layout: "default" },
-      { type: "Cards"  as BlockType, layout: "grid-2" },
-      { type: "Table"  as BlockType, layout: "basic" },
+      { type: "Cards" as BlockType, layout: "grid-2" },
+      { type: "Table" as BlockType, layout: "basic" },
       { type: "Footer" as BlockType, layout: "simple" },
     ];
   }
   // Default: landing/home
   return [
     { type: "Navbar" as BlockType, layout: "default" },
-    { type: "Hero"   as BlockType, layout: "centered" },
-    { type: "Cards"  as BlockType, layout: "grid-3" },
-    { type: "CTA"    as BlockType, layout: "banner" },
+    { type: "Hero" as BlockType, layout: "centered" },
+    { type: "Cards" as BlockType, layout: "grid-3" },
+    { type: "CTA" as BlockType, layout: "banner" },
     { type: "Footer" as BlockType, layout: "columns" },
   ];
 }
@@ -192,9 +192,8 @@ function TierDropdown({
                   setOpen(false);
                 }
               }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs hover:bg-gray-800 transition-colors text-left group relative ${
-                t.id === value ? "bg-gray-800/60" : ""
-              } ${t.locked ? "opacity-50 cursor-not-allowed" : ""}`}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs hover:bg-gray-800 transition-colors text-left group relative ${t.id === value ? "bg-gray-800/60" : ""
+                } ${t.locked ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${t.dot}`} />
               <span className="font-medium text-white w-12 shrink-0 flex items-center gap-1.5">
@@ -433,7 +432,7 @@ export default function WireframeEditor({
     fetch(`/api/projects/${projectId}/wireframes/${activeNodeId}`)
       .then((r) => r.json())
       .then((j) => setBlocks((j.data ?? []) as Block[]))
-      .catch(() => {});
+      .catch(() => { });
   }, [activeNodeId, projectId]);
 
   // ── Pan ────────────────────────────────────────────────────────────────────
@@ -541,7 +540,7 @@ export default function WireframeEditor({
     fetch(`/api/projects/${projectId}/wireframes/${activeNodeId}`)
       .then((r) => r.json())
       .then((j) => setBlocks((j.data ?? []) as Block[]))
-      .catch(() => {});
+      .catch(() => { });
   }, [activeNodeId, projectId]);
 
   // ── Block update ───────────────────────────────────────────────────────────
@@ -752,9 +751,8 @@ export default function WireframeEditor({
 
         {/* ── Right panel: Block props ─────────────────────────────────── */}
         <div
-          className={`shrink-0 border-l border-gray-800 bg-gray-900 transition-all duration-200 overflow-auto ${
-            selectedBlock ? "w-64" : "w-0 overflow-hidden"
-          }`}
+          className={`shrink-0 border-l border-gray-800 bg-gray-900 transition-all duration-200 overflow-auto ${selectedBlock ? "w-64" : "w-0 overflow-hidden"
+            }`}
         >
           {selectedBlock && (
             <BlockPropsPanel
@@ -827,11 +825,10 @@ function BlockPropsPanel({
                   setLocalProps((p) => ({ ...p, layout: variant }));
                   setDirty(true);
                 }}
-                className={`text-[11px] py-1.5 px-2 rounded border transition-colors text-left truncate ${
-                  currentLayout === variant
+                className={`text-[11px] py-1.5 px-2 rounded border transition-colors text-left truncate ${currentLayout === variant
                     ? "bg-brand-900/40 border-brand-600/60 text-brand-300 font-semibold"
                     : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
-                }`}
+                  }`}
               >
                 {variant}
               </button>
