@@ -32,8 +32,8 @@ const MODEL_CREDITS: Record<string, number> = {
 };
 
 const MODEL_ID_MAP: Record<string, string> = {
-  "gemini-2-0-flash":  "gemini-2.0-flash-001",
-  "claude-sonnet-3-7": "claude-3-7-sonnet-20250619",
+  "gemini-2-0-flash":  "gemini-1.5-flash-latest",
+  "claude-sonnet-3-7": "claude-3-5-sonnet-latest",
 };
 
 function resolveModelId(model: string): string {
