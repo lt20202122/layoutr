@@ -21,7 +21,7 @@ const TIERS: Tier[] = [
     id: "gemini-2-0-flash",
     tier: "Low",
     modelLabel: "gemini-2.0-flash",
-    credits: 1,
+    credits: 5,
     provider: "google",
     dot: "bg-green-400",
   },
@@ -29,7 +29,7 @@ const TIERS: Tier[] = [
     id: "deepseek-chat",
     tier: "Medium",
     modelLabel: "deepseek-chat",
-    credits: 2,
+    credits: 10,
     provider: "deepseek",
     dot: "bg-yellow-400",
   },
@@ -37,7 +37,7 @@ const TIERS: Tier[] = [
     id: "claude-sonnet-3-7",
     tier: "High",
     modelLabel: "claude-sonnet-3-7",
-    credits: 15,
+    credits: 25,
     provider: "anthropic",
     dot: "bg-red-400",
   },
@@ -83,7 +83,7 @@ function TierDropdown({
         <span className="flex items-center gap-2 min-w-0">
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${selected.dot}`} />
           <span className="font-medium">{selected.tier}</span>
-          <span className="text-gray-500 truncate">{selected.modelLabel} · {selected.credits} cr/1K tokens</span>
+          <span className="text-gray-500 truncate">{selected.modelLabel} · ~{selected.credits} credits</span>
         </span>
         <svg
           className={`w-3 h-3 text-gray-500 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}

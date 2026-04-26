@@ -200,7 +200,7 @@ server.tool(
 
 server.tool(
   "scaffold_sitemap",
-  "Scaffold a complete sitemap from a list of pages with optional hierarchy. Use this to quickly populate a project from a natural-language description.",
+  "Scaffold a complete sitemap from a list of pages with optional hierarchy and wireframe blocks. Use this to quickly populate a project from a natural-language description.",
   {
     project_id: z.string().uuid().describe("Project ID"),
     pages: z
@@ -211,6 +211,16 @@ server.tool(
           type: z.enum(["page", "section", "folder", "link", "modal", "component"]).default("page"),
           parent_label: z.string().optional().describe("Label of the parent page (must already exist in this list or the project)"),
           notes: z.string().optional(),
+          blocks: z
+            .array(
+              z.object({
+                type: z.enum(["Hero", "Navbar", "Cards", "CTA", "Form", "Footer", "Text", "Image", "Table"]).describe("Block type"),
+                order_index: z.number().int().min(0).optional().describe("Position in the wireframe"),
+                props: z.record(z.unknown()).optional().describe("Block properties"),
+              })
+            )
+            .optional()
+            .describe("Wireframe sections/blocks for this page (e.g. Navbar, Hero, Footer)"),
         })
       )
       .describe("List of pages to create"),
@@ -232,6 +242,19 @@ server.tool(
         parent_id,
       });
       labelToId.set(page.label, node.id);
+
+      // Create wireframe blocks for this node if provided
+      if (page.blocks && page.blocks.length > 0) {
+        for (let i = 0; i < page.blocks.length; i++) {
+          const b = page.blocks[i];
+          await client.createBlock(project_id, node.id, {
+            type: b.type,
+            order_index: b.order_index ?? i,
+            props: b.props,
+          });
+        }
+      }
+
       created.push(node);
     }
 

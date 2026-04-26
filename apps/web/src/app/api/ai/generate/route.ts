@@ -104,11 +104,12 @@ function buildModel(provider: ProviderKey, model: string, byokKey?: string) {
 // ─── System prompts ───────────────────────────────────────────────────────────
 
 function buildSitemapSystemPrompt(existingNodes: unknown[]): string {
-  return `You are a sitemap architect. Given the user's request, return a JSON array of sitemap node operations to create or update.
+  return `You are a sitemap and wireframe architect. Given the user's request, return a JSON array of sitemap node operations to create or update.
 Each operation must follow this exact shape:
-{ "action": "create" | "update" | "delete", "node": { "label": string, "type": "page"|"section"|"folder"|"link"|"modal"|"component", "parent_label"?: string, "url_path"?: string, "notes"?: string } }
+{ "action": "create" | "update" | "delete", "node": { "label": string, "type": "page"|"section"|"folder"|"link"|"modal"|"component", "parent_label"?: string, "url_path"?: string, "notes"?: string }, "blocks"?: [{ "type": "Navbar"|"Hero"|"Cards"|"CTA"|"Form"|"Footer"|"Text"|"Image"|"Table", "order_index": number, "props"?: object }] }
 
 For "update" and "delete", include the node label to match existing nodes.
+For "create" operations on pages, always include a "blocks" array with the wireframe sections for that page. A typical page has Navbar (order 0), one or more main sections (Hero, Cards, Form, etc.), and Footer (last). Tailor blocks to each page's purpose.
 Keep the sitemap practical, well-structured, and logical.
 
 Current sitemap state (${existingNodes.length} nodes):
@@ -241,6 +242,11 @@ export async function POST(request: NextRequest) {
       url_path?: string;
       notes?: string;
     };
+    blocks?: Array<{
+      type: string;
+      order_index?: number;
+      props?: Record<string, unknown>;
+    }>;
     block?: {
       type: string;
       order_index?: number;
@@ -290,6 +296,18 @@ export async function POST(request: NextRequest) {
         if (data) {
           labelToId.set(n.label, data.id);
           results.push(data);
+
+          // Also create wireframe blocks for this node if provided
+          if (op.blocks && op.blocks.length > 0) {
+            const blockRows = op.blocks.map((b, i) => ({
+              project_id,
+              node_id: data.id,
+              type: b.type,
+              order_index: b.order_index ?? i,
+              props: b.props ?? {},
+            }));
+            await supabase.from("wireframe_blocks").insert(blockRows);
+          }
         }
       } else if (op.action === "update") {
         const nodeId = labelToId.get(n.label);
