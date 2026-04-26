@@ -21,7 +21,7 @@ const TIERS: Tier[] = [
     id: "gemini-2-0-flash",
     tier: "Low",
     modelLabel: "gemini-2.0-flash",
-    credits: 5,
+    credits: 1,
     provider: "google",
     dot: "bg-green-400",
   },
@@ -29,7 +29,7 @@ const TIERS: Tier[] = [
     id: "deepseek-chat",
     tier: "Medium",
     modelLabel: "deepseek-chat",
-    credits: 10,
+    credits: 2,
     provider: "deepseek",
     dot: "bg-yellow-400",
   },
@@ -37,7 +37,7 @@ const TIERS: Tier[] = [
     id: "claude-sonnet-3-7",
     tier: "High",
     modelLabel: "claude-sonnet-3-7",
-    credits: 25,
+    credits: 15,
     provider: "anthropic",
     dot: "bg-red-400",
   },
@@ -83,7 +83,7 @@ function TierDropdown({
         <span className="flex items-center gap-2 min-w-0">
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${selected.dot}`} />
           <span className="font-medium">{selected.tier}</span>
-          <span className="text-gray-500 truncate">{selected.modelLabel} · ~{selected.credits} cr</span>
+          <span className="text-gray-500 truncate">{selected.modelLabel} · {selected.credits} cr/1K tokens</span>
         </span>
         <svg
           className={`w-3 h-3 text-gray-500 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
@@ -109,7 +109,7 @@ function TierDropdown({
               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${t.dot}`} />
               <span className="font-medium text-white w-12 shrink-0">{t.tier}</span>
               <span className="text-gray-400">{t.modelLabel}</span>
-              <span className="ml-auto text-gray-500 shrink-0">~{t.credits} cr</span>
+              <span className="ml-auto text-gray-500 shrink-0">{t.credits} cr/1K tokens</span>
             </button>
           ))}
         </div>
@@ -312,7 +312,7 @@ export default function AiPanel({ projectId, onNodesUpdated, onGenerating }: Pro
             className="w-full text-xs bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none disabled:opacity-50 transition-opacity"
           />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-gray-600">⌘↵ to send · costs ~{tier.credits} credits</span>
+            <span className="text-[10px] text-gray-600">⌘↵ to send · billed by tokens used</span>
             <button
               type="submit"
               disabled={loading || !prompt.trim()}

@@ -30,16 +30,33 @@ const GenerateSchema = z.object({
   provider: z.enum(["anthropic", "openai", "google", "groq", "deepseek"]).default("google"),
 });
 
-// ─── Credit cost per tier (low=5, medium=10, high=25) ────────────────────────
+// ─── Minimum balance required to start a call (pre-flight check) ─────────────
 
-const MODEL_CREDITS: Record<string, number> = {
-  "gemini-2-0-flash":  5,   // low
-  "deepseek-chat":     10,  // medium
-  "claude-sonnet-3-7": 25,  // high
+const MODEL_MIN_BALANCE: Record<string, number> = {
+  "gemini-2-0-flash":  3,
+  "deepseek-chat":     5,
+  "claude-sonnet-3-7": 15,
 };
 
-function creditCost(model: string): number {
-  return MODEL_CREDITS[model] ?? 10;
+// ─── Credits charged per 1 000 tokens (post-call, based on actual usage) ─────
+// Rates include margin over real API costs. 1 credit ≈ $0.001.
+// Gemini Flash: ~$0.10/1M in + $0.40/1M out → ~0.5/1K rate → 1 cr/1K (2x margin)
+// DeepSeek V3:  ~$0.27/1M in + $1.10/1M out → ~0.7/1K rate → 2 cr/1K (3x margin)
+// Claude Sonnet 3.7: ~$3/1M in + $15/1M out → ~9/1K rate → 15 cr/1K (1.7x margin)
+
+const MODEL_RATE_PER_1K: Record<string, number> = {
+  "gemini-2-0-flash":  1.0,
+  "deepseek-chat":     2.0,
+  "claude-sonnet-3-7": 15.0,
+};
+
+function minBalanceRequired(model: string): number {
+  return MODEL_MIN_BALANCE[model] ?? 5;
+}
+
+function computeCreditCost(model: string, totalTokens: number): number {
+  const rate = MODEL_RATE_PER_1K[model] ?? 2.0;
+  return Math.max(1, Math.ceil((totalTokens / 1000) * rate));
 }
 
 // ─── Provider factory ─────────────────────────────────────────────────────────
@@ -149,8 +166,9 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // ── Credit check (skip if BYOK) ───────────────────────────────────────────
-  const cost = creditCost(model);
+  // ── Credit pre-flight check (skip if BYOK) ───────────────────────────────
+  const minRequired = minBalanceRequired(model);
+  let currentCredits = 0;
   let creditsRemaining = 0;
 
   if (!byokKey) {
@@ -165,11 +183,10 @@ export async function POST(request: NextRequest) {
       .eq("id", auth.userId)
       .single();
 
-    const credits = profile?.credits ?? 0;
-    if (credits < cost) {
-      return err(`Insufficient credits. Need ${cost}, have ${credits}.`, 402);
+    currentCredits = profile?.credits ?? 0;
+    if (currentCredits < minRequired) {
+      return err(`Insufficient credits. Need at least ${minRequired}, have ${currentCredits}.`, 402);
     }
-    creditsRemaining = credits - cost;
   }
 
   // ── Fetch current state ───────────────────────────────────────────────────
@@ -186,6 +203,8 @@ export async function POST(request: NextRequest) {
 
   // ── Call LLM ──────────────────────────────────────────────────────────────
   let llmResult: string;
+  let actualCost = minRequired;
+
   try {
     const llmModel = buildModel(provider as ProviderKey, model, byokKey);
     const systemPrompt =
@@ -193,15 +212,22 @@ export async function POST(request: NextRequest) {
         ? buildSitemapSystemPrompt(existingItems)
         : buildWireframeSystemPrompt(existingItems);
 
-    const { text } = await generateText({
+    const { text, usage } = await generateText({
       model: llmModel,
       system: systemPrompt,
       prompt,
     });
     llmResult = text;
+    if (!byokKey) {
+      actualCost = computeCreditCost(model, usage.totalTokens ?? 0);
+    }
   } catch (e) {
     const msg = e instanceof Error ? e.message : "LLM call failed";
     return err(`LLM error: ${msg}`, 502);
+  }
+
+  if (!byokKey) {
+    creditsRemaining = Math.max(0, currentCredits - actualCost);
   }
 
   // ── Parse LLM response ────────────────────────────────────────────────────
@@ -291,7 +317,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // ── Deduct credits (only if not BYOK) ────────────────────────────────────
+  // ── Deduct credits based on actual token usage (only if not BYOK) ────────
   if (!byokKey) {
     await supabase
       .from("user_profiles")
@@ -309,7 +335,7 @@ export async function POST(request: NextRequest) {
   return ok({
     nodes: updatedNodes ?? [],
     operations_applied: results.length,
-    credits_used: byokKey ? 0 : cost,
+    credits_used: byokKey ? 0 : actualCost,
     credits_remaining: byokKey ? null : creditsRemaining,
     byok: !!byokKey,
   });
