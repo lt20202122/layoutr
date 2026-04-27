@@ -10,7 +10,6 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { ok, err, authenticate } from "@/lib/api";
 import { decryptKey } from "@/lib/crypto";
 import { computeCredits, MIN_CREDITS, CREDIT_VALUE_USD } from "@/lib/credits";
-import { GoogleGenAI } from "@google/genai";
 
 // Singleton default providers (use env-var API keys when no BYOK)
 const defaultAnthropic = createAnthropic();
@@ -206,44 +205,19 @@ export async function POST(request: NextRequest) {
         ? buildSitemapSystemPrompt(existingItems)
         : buildWireframeSystemPrompt(existingItems);
 
-    if (provider === "google") {
-      const resolvedModel = resolveModelId(model);
-      const ai = new GoogleGenAI({
-        apiKey: byokKey || process.env.GOOGLE_GENERATIVE_AI_API_KEY || "",
-      });
-
-      const response = await ai.models.generateContent({
-        model: resolvedModel,
-        contents: prompt,
-        config: {
-          systemInstruction: systemPrompt,
-        },
-      });
-
-      llmResult = response.text || "";
-      if (!byokKey) {
-        const usage = (response as any).usageMetadata;
-        actualCost = computeCredits(
-          model,
-          usage?.promptTokenCount ?? 1000,
-          usage?.candidatesTokenCount ?? 1000
-        );
-      }
-    } else {
-      const llmModel = buildModel(provider as ProviderKey, model, byokKey);
-      const { text, usage } = await generateText({
-        model: llmModel,
-        system: systemPrompt,
-        prompt,
-      });
-      llmResult = text;
-      if (!byokKey) {
-        actualCost = computeCredits(
-          model,
-          (usage as any).promptTokens ?? 0,
-          (usage as any).completionTokens ?? 0
-        );
-      }
+    const llmModel = buildModel(provider as ProviderKey, model, byokKey);
+    const { text, usage } = await generateText({
+      model: llmModel,
+      system: systemPrompt,
+      prompt,
+    });
+    llmResult = text;
+    if (!byokKey) {
+      actualCost = computeCredits(
+        model,
+        (usage as any).promptTokens ?? 0,
+        (usage as any).completionTokens ?? 0
+      );
     }
   } catch (e) {
     const msg = e instanceof Error ? e.message : "LLM call failed";
