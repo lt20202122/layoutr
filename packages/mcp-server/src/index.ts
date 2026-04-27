@@ -129,6 +129,7 @@ server.tool(
     parent_id: z.string().uuid().nullable().optional().describe("Parent node ID, or null for root"),
     url_path: z.string().nullable().optional().describe("URL path, e.g. /about"),
     notes: z.string().nullable().optional().describe("Notes about this page"),
+    metadata: z.record(z.unknown()).optional().describe("Metadata, e.g. { sections: [{ label: 'Header', color: 'teal' }, { label: 'Hero', color: 'blue' }, { label: 'Footer', color: 'purple' }] }"),
     order_index: z.number().int().min(0).optional().describe("Order among siblings"),
   },
   async ({ project_id, ...nodeInput }) => {
@@ -151,6 +152,7 @@ server.tool(
     parent_id: z.string().uuid().nullable().optional().describe("New parent ID"),
     url_path: z.string().nullable().optional(),
     notes: z.string().nullable().optional(),
+    metadata: z.record(z.unknown()).optional(),
     order_index: z.number().int().min(0).optional(),
   },
   async ({ project_id, node_id, ...updates }) => {
@@ -200,7 +202,7 @@ server.tool(
 
 server.tool(
   "scaffold_sitemap",
-  "Scaffold a complete sitemap from a list of pages with optional hierarchy and wireframe blocks. Use this to quickly populate a project from a natural-language description.",
+  "Scaffold a complete sitemap from a list of pages. For professional pages, prefer a structure like: Header -> Hero -> [Features/Content] -> Footer. You can add any number of sections and name them creatively.",
   {
     project_id: z.string().uuid().describe("Project ID"),
     pages: z
@@ -211,6 +213,7 @@ server.tool(
           type: z.enum(["page", "section", "folder", "link", "modal", "component"]).default("page"),
           parent_label: z.string().optional().describe("Label of the parent page (must already exist in this list or the project)"),
           notes: z.string().optional(),
+          metadata: z.record(z.unknown()).optional().describe("Metadata, e.g. { sections: [...] }"),
           blocks: z
             .array(
               z.object({
@@ -239,6 +242,7 @@ server.tool(
         type: page.type,
         url_path: page.url_path,
         notes: page.notes,
+        metadata: page.metadata,
         parent_id,
       });
       labelToId.set(page.label, node.id);

@@ -43,9 +43,10 @@ export const SECTION_COLOR_OPTIONS: { label: string; value: SectionColor }[] = [
 ];
 
 export const DEFAULT_SECTIONS: Section[] = [
-  { id: "d1", label: "Header",  color: "teal" },
-  { id: "d2", label: "Content", color: "blue" },
-  { id: "d3", label: "Footer",  color: "purple" },
+  { id: "d1", label: "Header",   color: "teal" },
+  { id: "d2", label: "Hero",     color: "blue" },
+  { id: "d3", label: "Features", color: "navy" },
+  { id: "d4", label: "Footer",   color: "purple" },
 ];
 
 export function getSections(node: SitemapNode): Section[] {

@@ -88,11 +88,14 @@ function buildModel(provider: ProviderKey, model: string, byokKey?: string) {
 function buildSitemapSystemPrompt(existingNodes: unknown[]): string {
   return `You are a sitemap and wireframe architect. Given the user's request, return a JSON array of sitemap node operations to create or update.
 Each operation must follow this exact shape:
-{ "action": "create" | "update" | "delete", "node": { "label": string, "type": "page"|"section"|"folder"|"link"|"modal"|"component", "parent_label"?: string, "url_path"?: string, "notes"?: string }, "blocks"?: [{ "type": "Navbar"|"Hero"|"Cards"|"CTA"|"Form"|"Footer"|"Text"|"Image"|"Table", "order_index": number, "props"?: object }] }
+{ "action": "create" | "update" | "delete", "node": { "label": string, "type": "page"|"section"|"folder"|"link"|"modal"|"component", "parent_label"?: string, "url_path"?: string, "notes"?: string, "metadata"?: { "sections": Array<{ "label": string, "color": "teal"|"blue"|"navy"|"purple"|"slate"|"indigo" }> } }, "blocks"?: [{ "type": "Navbar"|"Hero"|"Cards"|"CTA"|"Form"|"Footer"|"Text"|"Image"|"Table", "order_index": number, "props"?: object }] }
 
-For "update" and "delete", include the node label to match existing nodes.
-For "create" operations on pages, always include a "blocks" array with the wireframe sections for that page. A typical page has Navbar (order 0), one or more main sections (Hero, Cards, Form, etc.), and Footer (last). Tailor blocks to each page's purpose.
-Keep the sitemap practical, well-structured, and logical.
+For "create" operations on pages, you should:
+1. Include a "metadata" object with a "sections" array describing the visual structure of the page card.
+2. Use a professional baseline: "Header" -> "Hero" -> 1-3 content sections (be creative! e.g., "Features", "Pricing", "Team", "CTA") -> "Footer".
+3. You have full creative freedom: while a Hero section is recommended for premium pages, you can add any number of sections and name them whatever best fits the page purpose.
+4. Avoid using just a generic "Content" label if you can be more descriptive.
+5. Also include a "blocks" array with the wireframe sections for that page. A typical page has Navbar (order 0), Hero (order 1), one or more main sections, and Footer (last).
 
 Current sitemap state (${existingNodes.length} nodes):
 ${JSON.stringify(existingNodes, null, 2)}
@@ -319,6 +322,7 @@ export async function POST(request: NextRequest) {
             parent_id: n.parent_label ? (labelToId.get(n.parent_label) ?? null) : null,
             url_path: n.url_path ?? null,
             notes: n.notes ?? null,
+            metadata: n.metadata ?? null,
             order_index: siblings.length,
           })
           .select()

@@ -95,15 +95,16 @@ Available block types and their layout variants:
 - Table: "basic" (header + rows), "striped" (accent header + alternating rows), "compact" (dense rows)
 
 Rules:
-- Every page MUST start with Navbar and end with Footer
-- Choose blocks and layouts that match the page purpose (inferred from label and notes)
-- Home / Landing pages: Hero (centered or fullscreen) → Cards (grid-3) → CTA (banner)
-- About / Team pages: Hero (split) → Text (two-column) → Cards (grid-2 for team)
-- Contact / Support pages: Hero (minimal) → Form (card)
-- Pricing pages: Hero (minimal) → Cards (grid-3) → CTA (banner)
-- Blog / Article / News pages: Hero (minimal) → Text (body) → Cards (grid-2 for related)
-- Dashboard / Admin / Analytics pages: Cards (grid-2) → Table (basic)
-- Login / Sign-in / Register / Auth pages: Form (card) only (skip Hero), Footer (centered)
+- Every page MUST start with Navbar and end with Footer.
+- Almost every page (except Login/Auth) SHOULD have a Hero section immediately after the Navbar.
+- Choose blocks and layouts that match the page purpose (inferred from label and notes).
+- Home / Landing pages: Navbar -> Hero (centered or fullscreen) -> Cards (grid-3) -> CTA (banner) -> Footer.
+- About / Team pages: Navbar -> Hero (split) -> Text (two-column) -> Cards (grid-2 for team) -> Footer.
+- Contact / Support pages: Navbar -> Hero (minimal) -> Form (card) -> Footer.
+- Pricing pages: Navbar -> Hero (minimal) -> Cards (grid-3) -> CTA (banner) -> Footer.
+- Blog / Article / News pages: Navbar -> Hero (minimal) -> Text (body) -> Cards (grid-2 for related) -> Footer.
+- Dashboard / Admin / Analytics pages: Navbar -> Hero (minimal) -> Cards (grid-2) -> Table (basic) -> Footer.
+- Login / Sign-in / Register / Auth pages: Navbar (minimal) -> Form (card) -> Footer (centered). Skip Hero here.
 
 Sitemap pages to assign layouts for:
 ${JSON.stringify(nodes, null, 2)}
