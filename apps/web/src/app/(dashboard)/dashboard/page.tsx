@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
 import CreateProjectButton from "@/components/ui/CreateProjectButton";
+import ProjectCard from "@/components/ui/ProjectCard";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -44,30 +44,8 @@ export default async function DashboardPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {projects.map((project: any) => (
-            <Link
-              key={project.id}
-              href={`/projects/${project.id}/sitemap`}
-              className="p-5 bg-gray-900 border border-gray-800 rounded-xl hover:border-gray-600 transition-colors group"
-            >
-              <div className="flex items-start justify-between">
-                <div className="min-w-0">
-                  <h2 className="font-semibold truncate group-hover:text-brand-400 transition-colors">
-                    {project.name}
-                  </h2>
-                  {project.description && (
-                    <p className="text-gray-400 text-sm mt-1 line-clamp-2">{project.description}</p>
-                  )}
-                </div>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-600 group-hover:text-gray-400 transition-colors shrink-0 mt-0.5 ml-2">
-                  <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <p className="text-xs text-gray-500 mt-4">
-                Updated {new Date(project.updated_at).toLocaleDateString()}
-              </p>
-            </Link>
+          {projects.map((project) => (
+            <ProjectCard key={project.id} project={project} />
           ))}
         </div>
       )}

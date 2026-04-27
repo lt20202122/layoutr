@@ -85,19 +85,53 @@ function buildModel(provider: ProviderKey, model: string, byokKey?: string) {
 // ─── System prompts ───────────────────────────────────────────────────────────
 
 function buildSitemapSystemPrompt(existingNodes: unknown[]): string {
+  // Build a label-based tree view so the AI can see the parent-child structure
+  const nodeList = existingNodes as Array<{ id: string; label: string; parent_id: string | null }>;
+  const idToLabel = new Map<string, string>();
+  for (const n of nodeList) idToLabel.set(n.id, n.label);
+
+  const childrenByParent = new Map<string, string[]>();
+  const roots: string[] = [];
+  for (const n of nodeList) {
+    if (n.parent_id && idToLabel.has(n.parent_id)) {
+      const pl = idToLabel.get(n.parent_id)!;
+      if (!childrenByParent.has(pl)) childrenByParent.set(pl, []);
+      childrenByParent.get(pl)!.push(n.label);
+    } else {
+      roots.push(n.label);
+    }
+  }
+
+  function renderTree(entries: string[], depth: number): string {
+    let out = "";
+    for (const label of entries) {
+      out += "  ".repeat(depth) + "- " + label + (depth === 0 ? " [HOMEPAGE]" : "") + "\n";
+      const kids = childrenByParent.get(label);
+      if (kids) out += renderTree(kids, depth + 1);
+    }
+    return out;
+  }
+
+  const treeView = renderTree(roots, 0);
+
   return `You are a sitemap and wireframe architect. Given the user's request, return a JSON array of sitemap node operations to create or update.
 Each operation must follow this exact shape:
 { "action": "create" | "update" | "delete", "node": { "label": string, "type": "page"|"section"|"folder"|"link"|"modal"|"component", "parent_label"?: string, "url_path"?: string, "notes"?: string, "metadata"?: { "sections": Array<{ "label": string, "color": "teal"|"blue"|"navy"|"purple"|"slate"|"indigo" }> } }, "blocks"?: [{ "type": "Navbar"|"Hero"|"Cards"|"CTA"|"Form"|"Footer"|"Text"|"Image"|"Table", "order_index": number, "props"?: object }] }
 
-For "create" operations on pages, you should:
-1. Include a "metadata" object with a "sections" array describing the visual structure of the page card.
-2. Use a professional baseline: "Header" -> "Hero" -> 1-3 content sections (be creative! e.g., "Features", "Pricing", "Team", "CTA") -> "Footer".
-3. You have full creative freedom: while a Hero section is recommended for premium pages, you can add any number of sections and name them whatever best fits the page purpose.
-4. Avoid using just a generic "Content" label if you can be more descriptive.
-5. Also include a "blocks" array with the wireframe sections for that page. A typical page has Navbar (order 0), Hero (order 1), one or more main sections, and Footer (last).
+=== PARENT_LABEL RULES (CRITICAL) ===
+- The homepage (tree root, labeled [HOMEPAGE] in the tree below) has NO parent_label.
+- EVERY other page MUST have a parent_label matching its parent node's label exactly.
+- All top-level pages must be children of the homepage. Example: if homepage is "Home", set parent_label: "Home" on every top-level page.
+- Sub-pages must link to their direct parent (e.g., a "Team" page under "About" → parent_label: "About").
+- If no homepage exists yet, create one first. Then link all other pages under it.
+
+Current sitemap tree (labels, [HOMEPAGE] = root node):
+${treeView}
 
 Current sitemap state (${existingNodes.length} nodes):
 ${JSON.stringify(existingNodes, null, 2)}
+
+For "create" operations on pages, include a "metadata" object with a "sections" array. Use a professional baseline: "Header" -> "Hero" -> 1-3 content sections (be creative: "Features", "Pricing", "Team", "CTA", etc.) -> "Footer". Also include a "blocks" array with wireframe blocks for that page (Navbar at order 0, Hero at order 1, content sections, Footer last).
 
 Respond ONLY with a valid JSON array — no markdown, no explanation.`;
 }
@@ -161,7 +195,7 @@ export async function POST(request: NextRequest) {
     // Ensure a profile row exists (handles users created before the signup trigger)
     await supabase
       .from("user_profiles")
-      .upsert({ id: auth.userId, credits: 2000 }, { onConflict: "id", ignoreDuplicates: true });
+      .upsert({ id: auth.userId, credits: 100 }, { onConflict: "id", ignoreDuplicates: true });
 
     const { data: profile } = await supabase
       .from("user_profiles")

@@ -404,6 +404,7 @@ export default function WireframeEditor({
   const [draggingOver, setDraggingOver] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [scaffolding, setScaffolding] = useState(false);
+  const [autoAssigning, setAutoAssigning] = useState(false);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
@@ -534,6 +535,24 @@ export default function WireframeEditor({
     setScaffolding(false);
   }, [apiBase, activeNodeId, activeNode]);
 
+  // ── Auto-assign all pages ────────────────────────────────────────────────────
+  const autoAssignAllPages = useCallback(async () => {
+    setAutoAssigning(true);
+    try {
+      await fetch(`/api/projects/${projectId}/wireframes/auto-assign`, {
+        method: "POST",
+      });
+      if (activeNodeId) {
+        const res = await fetch(`/api/projects/${projectId}/wireframes/${activeNodeId}`);
+        const json = await res.json();
+        setBlocks((json.data ?? []) as Block[]);
+      }
+    } catch {
+    } finally {
+      setAutoAssigning(false);
+    }
+  }, [projectId, activeNodeId]);
+
   // ── Reload current page blocks (after AI assign) ───────────────────────────
   const reloadBlocks = useCallback(() => {
     if (!activeNodeId) return;
@@ -624,6 +643,18 @@ export default function WireframeEditor({
             )}
 
             <div className="ml-auto flex items-center gap-2">
+              {/* Auto-assign all pages (rule-based) */}
+              {pageNodes.length > 0 && (
+                <button
+                  onClick={autoAssignAllPages}
+                  disabled={autoAssigning}
+                  className="text-xs px-2.5 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-600 rounded-lg text-gray-300 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                  title="Auto-generate blocks for all pages from sitemap page types"
+                >
+                  {autoAssigning ? "Auto-assigning…" : "Auto-assign"}
+                </button>
+              )}
+
               {/* Assign Layouts AI button */}
               {pageNodes.length > 0 && (
                 <button

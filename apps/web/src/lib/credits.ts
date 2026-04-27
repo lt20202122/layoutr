@@ -1,6 +1,6 @@
 export type ModelId = "deepseek-chat" | "claude-sonnet-4-5" | "gpt-5.5";
 
-// 1 credit = $0.0001 (1/100th of a cent). 2000 free credits = $0.20.
+// 1 credit = $0.0001 (1/100th of a cent). 100 free credits = $0.01.
 export const CREDIT_VALUE_USD = 0.0001;
 export const MIN_CREDITS = 5;
 

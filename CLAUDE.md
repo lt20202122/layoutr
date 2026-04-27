@@ -17,7 +17,7 @@ layoutr/
 │   ├── cli/                  @layoutr/cli — npx layoutr init
 │   └── shared/               Shared types (future)
 ├── supabase/
-│   └── migrations/           001_initial_schema, 002_credits_design, 003_llm_api_keys_encrypted, 004_waitlist
+│   └── migrations/           001_initial_schema, 002_credits_design, 003_llm_api_keys_encrypted, 004_waitlist, 005_update_initial_credits
 └── turbo.json                Turborepo config
 ```
 
@@ -64,7 +64,7 @@ Users/agents can ask Layoutr's built-in AI to generate or modify sitemaps and wi
 | `design_system` | Design tokens per project (colors, typography, spacing) |
 | `api_keys` | REST API keys (`ltr_...` prefix) for MCP/CLI access |
 | `llm_api_keys` | BYOK LLM keys — AES-256-GCM encrypted (`key_ciphertext`, `key_iv`) |
-| `user_profiles` | Credit balance (default 2000 free credits per user) |
+| `user_profiles` | Credit balance (default 100 free credits per user) |
 | `waitlist` | Users awaiting plans and credit top-ups |
 
 ---
@@ -77,7 +77,7 @@ Users/agents can ask Layoutr's built-in AI to generate or modify sitemaps and wi
 | Pro | Claude Sonnet 4.5 | `claude-sonnet-4-5` | 6,000 | 30,000 | Active |
 | Max | GPT-5.5 | `gpt-5.5` | 30,000 | 150,000 | Locked |
 
-- 1 credit = $0.0001 (1/100th of a cent). 2000 free credits = $0.20.
+- 1 credit = $0.0001 (1/100th of a cent). 100 free credits = $0.01.
 - Rates are 2× markup over real API cost, tracked as input/output credit rates per 1M tokens.
 - BYOK users: zero credits deducted. Default provider keys (env vars) used when user has no BYOK key.
 - Min charge: 1 credit per call. Pre-flight check requires 5 / 50 / 300 credits depending on model.
@@ -232,7 +232,7 @@ Detects which AI coding tools are installed and injects the MCP config block aut
 - Sitemap editor — visual canvas, drag-and-drop, node types, collapsible tree
 - Wireframe editor — pannable/zoomable canvas, 9 block types, props panel
 - Design system tokens per project
-- Credit system (2000 free credits, per-model rates, live balance in header)
+- Credit system (100 free credits, per-model rates, live balance in header)
 - BYOK LLM key storage (AES-256-GCM encrypted)
 - `/api/ai/generate` — integrated AI for sitemap + wireframe generation
 - MCP server (18 tools) with StdioServerTransport

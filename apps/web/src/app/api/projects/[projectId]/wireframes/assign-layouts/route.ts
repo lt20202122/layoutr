@@ -163,7 +163,7 @@ export async function POST(
   if (!byokKey) {
     await supabase
       .from("user_profiles")
-      .upsert({ id: auth.userId, credits: 2000 }, { onConflict: "id", ignoreDuplicates: true });
+      .upsert({ id: auth.userId, credits: 100 }, { onConflict: "id", ignoreDuplicates: true });
 
     const { data: profile } = await supabase
       .from("user_profiles")
