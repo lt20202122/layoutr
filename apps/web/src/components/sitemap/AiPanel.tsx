@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import type { SitemapNode } from "./sitemapUtils";
 import { estimateCredits, ModelId } from "@/lib/credits";
+import WaitlistButton from "@/components/ui/WaitlistButton";
 
 // ─── Three-tier model config ──────────────────────────────────────────────────
 
@@ -272,12 +273,7 @@ export default function AiPanel({ projectId, onNodesUpdated, onGenerating }: Pro
           <div className="p-3 bg-red-900/20 border border-red-800/40 rounded-xl text-xs space-y-2">
             <p className="text-red-300 font-medium">⚡ Out of credits</p>
             <p className="text-gray-400">You need more credits to use AI generation.</p>
-            <a
-              href="/settings"
-              className="inline-block text-brand-400 hover:text-brand-300 underline underline-offset-2 transition-colors"
-            >
-              Top up credits →
-            </a>
+            <WaitlistButton />
           </div>
         )}
         {error && error !== "out_of_credits" && (

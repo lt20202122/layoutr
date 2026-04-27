@@ -1,11 +1,20 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import ApiKeysManager from "@/components/ui/ApiKeysManager";
 import LLMKeysManager from "@/components/ui/LLMKeysManager";
 import DeleteAccountSection from "@/components/ui/DeleteAccountSection";
+import WaitlistButton from "@/components/ui/WaitlistButton";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  // Fetch credit balance (service client bypasses RLS)
+  const svc = createServiceClient();
+  const { data: profile } = await svc
+    .from("user_profiles")
+    .select("credits")
+    .eq("id", user?.id)
+    .single();
 
   const keysQuery = supabase
     .from("api_keys")
@@ -24,6 +33,22 @@ export default async function SettingsPage() {
       </div>
 
       <section className="space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold">Credits</h2>
+          <p className="text-gray-400 text-sm mt-1">
+            You have <strong className="text-white">{profile?.credits ?? 0}</strong> credits
+            remaining (${(((profile?.credits ?? 0) * 0.0001).toFixed(2))}).
+          </p>
+          <p className="text-gray-500 text-xs mt-2">
+            Plans and credit top-ups are coming soon.
+          </p>
+          <div className="mt-3">
+            <WaitlistButton />
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4 pt-4 border-t border-gray-800">
         <div>
           <h2 className="text-lg font-semibold">API Keys</h2>
           <p className="text-gray-400 text-sm mt-1">
