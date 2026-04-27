@@ -20,7 +20,7 @@ export default async function WireframePage({ params, searchParams }: Params) {
   // Fetch sitemap nodes for node picker
   const { data: nodes } = await supabase
     .from("sitemap_nodes")
-    .select("id, label, type")
+    .select("id, label, type, metadata")
     .eq("project_id", projectId)
     .order("order_index");
 

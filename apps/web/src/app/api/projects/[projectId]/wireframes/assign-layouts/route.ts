@@ -79,7 +79,7 @@ function buildModel(provider: ProviderKey, model: string, byokKey?: string) {
 // ─── System prompt ────────────────────────────────────────────────────────────
 
 function buildSystemPrompt(
-  nodes: Array<{ id: string; label: string; notes?: string | null }>
+  nodes: Array<{ id: string; label: string; notes?: string | null; sections?: any[] }>
 ): string {
   return `You are a wireframe layout designer. Given a website sitemap, assign the optimal wireframe blocks and layout variants for each page.
 
@@ -95,9 +95,10 @@ Available block types and their layout variants:
 - Table: "basic" (header + rows), "striped" (accent header + alternating rows), "compact" (dense rows)
 
 Rules:
+- If a page has specific "sections" defined in the sitemap data below, you MUST use them as the primary guide for which blocks to assign and in what order. Map each section label to the most appropriate block type.
 - Every page MUST start with Navbar and end with Footer.
 - Almost every page (except Login/Auth) SHOULD have a Hero section immediately after the Navbar.
-- Choose blocks and layouts that match the page purpose (inferred from label and notes).
+- Choose blocks and layouts that match the page purpose (inferred from label, notes, and sections).
 - Home / Landing pages: Navbar -> Hero (centered or fullscreen) -> Cards (grid-3) -> CTA (banner) -> Footer.
 - About / Team pages: Navbar -> Hero (split) -> Text (two-column) -> Cards (grid-2 for team) -> Footer.
 - Contact / Support pages: Navbar -> Hero (minimal) -> Form (card) -> Footer.
@@ -180,7 +181,7 @@ export async function POST(
   // Fetch page-type sitemap nodes
   const { data: nodes } = await supabase
     .from("sitemap_nodes")
-    .select("id, label, type, notes")
+    .select("id, label, type, notes, metadata")
     .eq("project_id", projectId)
     .eq("type", "page")
     .order("order_index");
@@ -192,7 +193,12 @@ export async function POST(
   let llmResult: string;
   try {
     const systemPrompt = buildSystemPrompt(
-      pageNodes.map((n) => ({ id: n.id, label: n.label, notes: n.notes }))
+      pageNodes.map((n) => ({
+        id: n.id,
+        label: n.label,
+        notes: n.notes,
+        sections: (n.metadata as any)?.sections
+      }))
     );
     const prompt = `Assign optimal wireframe layouts for all ${pageNodes.length} pages listed above.`;
 

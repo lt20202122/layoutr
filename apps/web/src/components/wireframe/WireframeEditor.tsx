@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import BlockLibrary from "./BlockLibrary";
 import WireframeBlock, { BLOCK_LAYOUT_VARIANTS, DEFAULT_LAYOUTS } from "./WireframeBlock";
 import { estimateCredits, ModelId } from "@/lib/credits";
+import { mapSectionToBlock, Section } from "../sitemap/sitemapUtils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,6 +26,9 @@ interface SitemapNodeRef {
   id: string;
   label: string;
   type: string;
+  metadata?: {
+    sections?: Section[];
+  } | null;
 }
 
 type Transform = { x: number; y: number; scale: number };
@@ -71,7 +75,10 @@ const TIERS: Tier[] = [
 
 // ─── Rule-based scaffold ──────────────────────────────────────────────────────
 
-function getDefaultBlocksForPage(label: string) {
+function getDefaultBlocksForPage(label: string, sections?: Section[]) {
+  if (sections && sections.length > 0) {
+    return sections.map((s) => mapSectionToBlock(s.label));
+  }
   const l = label.toLowerCase();
   const is = (kw: string[]) => kw.some((k) => l.includes(k));
 
@@ -517,7 +524,7 @@ export default function WireframeEditor({
   const scaffoldPage = useCallback(async () => {
     if (!apiBase || !activeNodeId || !activeNode) return;
     setScaffolding(true);
-    const defaultBlocks = getDefaultBlocksForPage(activeNode.label);
+    const defaultBlocks = getDefaultBlocksForPage(activeNode.label, activeNode.metadata?.sections);
     for (const [i, b] of defaultBlocks.entries()) {
       await fetch(apiBase, {
         method: "POST",

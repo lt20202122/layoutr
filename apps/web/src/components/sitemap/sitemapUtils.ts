@@ -55,6 +55,23 @@ export function getSections(node: SitemapNode): Section[] {
   return DEFAULT_SECTIONS;
 }
 
+export function mapSectionToBlock(label: string): { type: string; layout: string } {
+  const l = label.toLowerCase();
+  const is = (kw: string[]) => kw.some((k) => l.includes(k));
+
+  if (is(["nav", "header", "menu"])) return { type: "Navbar", layout: "default" };
+  if (is(["hero", "welcome", "intro"])) return { type: "Hero", layout: "centered" };
+  if (is(["services", "features", "cards", "benefits", "grid", "testimonials", "reviews"])) return { type: "Cards", layout: "grid-3" };
+  if (is(["cta", "call to action", "action", "banner"])) return { type: "CTA", layout: "banner" };
+  if (is(["form", "contact", "signup", "login", "register", "input"])) return { type: "Form", layout: "card" };
+  if (is(["footer", "bottom", "copyright"])) return { type: "Footer", layout: "columns" };
+  if (is(["text", "content", "about", "description", "body"])) return { type: "Text", layout: "body" };
+  if (is(["image", "picture", "photo", "gallery"])) return { type: "Image", layout: "contained" };
+  if (is(["table", "data", "list", "pricing"])) return { type: "Table", layout: "basic" };
+
+  return { type: "Text", layout: "body" };
+}
+
 // ─── Card dimensions ────────────────────────────────────────────────────────
 export const CARD_WIDTH       = 224;
 export const CARD_SECTION_H   = 72;

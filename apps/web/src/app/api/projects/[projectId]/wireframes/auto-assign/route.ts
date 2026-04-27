@@ -1,8 +1,13 @@
 import { NextRequest } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ok, err, authenticate } from "@/lib/api";
+import { mapSectionToBlock } from "@/components/sitemap/sitemapUtils";
 
-function getDefaultBlocksForPage(label: string) {
+function getDefaultBlocksForPage(label: string, metadata?: any) {
+  const sections = metadata?.sections;
+  if (Array.isArray(sections) && sections.length > 0) {
+    return sections.map((s: any) => mapSectionToBlock(s.label));
+  }
   const l = label.toLowerCase();
   const is = (kw: string[]) => kw.some((k) => l.includes(k));
 
@@ -97,7 +102,7 @@ export async function POST(
 
   const { data: nodes } = await supabase
     .from("sitemap_nodes")
-    .select("id, label")
+    .select("id, label, metadata")
     .eq("project_id", projectId)
     .eq("type", "page")
     .order("order_index");
@@ -107,7 +112,7 @@ export async function POST(
 
   let pagesUpdated = 0;
   for (const node of pageNodes) {
-    const blocks = getDefaultBlocksForPage(node.label);
+    const blocks = getDefaultBlocksForPage(node.label, node.metadata);
     if (blocks.length === 0) continue;
 
     await supabase.from("wireframe_blocks").delete().eq("node_id", node.id);
