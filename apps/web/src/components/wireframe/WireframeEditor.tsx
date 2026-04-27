@@ -532,7 +532,7 @@ export default function WireframeEditor({
         body: JSON.stringify({
           type: b.type,
           order_index: i,
-          props: { ...BLOCK_DEFAULTS[b.type], layout: b.layout },
+          props: { ...BLOCK_DEFAULTS[b.type as BlockType], layout: b.layout },
         }),
       });
     }
@@ -656,9 +656,9 @@ export default function WireframeEditor({
                   onClick={autoAssignAllPages}
                   disabled={autoAssigning}
                   className="text-xs px-2.5 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-600 rounded-lg text-gray-300 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-                  title="Auto-generate blocks for all pages from sitemap page types"
+                  title="Auto-generate blocks for all pages (3 credits)"
                 >
-                  {autoAssigning ? "Auto-assigning…" : "Auto-assign"}
+                  {autoAssigning ? "Auto-assigning…" : "Auto-assign All (3 cr)"}
                 </button>
               )}
 

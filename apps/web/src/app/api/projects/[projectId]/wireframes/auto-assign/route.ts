@@ -100,6 +100,19 @@ export async function POST(
     .single();
   if (!project) return err("Project not found", 404);
 
+  // Credit check
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("credits")
+    .eq("id", auth.userId)
+    .single();
+
+  const COST = 3;
+  const currentCredits = profile?.credits ?? 0;
+  if (currentCredits < COST) {
+    return err(`Insufficient credits. Need at least ${COST}, have ${currentCredits}.`, 402);
+  }
+
   const { data: nodes } = await supabase
     .from("sitemap_nodes")
     .select("id, label, metadata")
@@ -130,6 +143,12 @@ export async function POST(
     await supabase.from("wireframe_blocks").insert(toInsert);
     pagesUpdated++;
   }
+
+  // Deduct credits
+  await supabase
+    .from("user_profiles")
+    .update({ credits: currentCredits - COST })
+    .eq("id", auth.userId);
 
   return ok({ pages_updated: pagesUpdated });
 }

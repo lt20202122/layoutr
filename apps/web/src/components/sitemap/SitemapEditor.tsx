@@ -17,6 +17,7 @@ export default function SitemapEditor({ projectId, initialNodes }: Props) {
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [autoAssigning, setAutoAssigning] = useState(false);
 
   const tree = buildTree(nodes);
   const selectedNode = nodes.find(n => n.id === selectedId) ?? null;
@@ -67,6 +68,26 @@ export default function SitemapEditor({ projectId, initialNodes }: Props) {
     if (selectedId && toDelete.has(selectedId)) setSelectedId(null);
   }, [nodes, apiBase, selectedId]);
 
+  const autoAssignWireframes = useCallback(async () => {
+    if (!confirm("This will auto-generate wireframes for ALL pages based on their sitemap sections. Cost: 3 credits. Continue?")) return;
+    setAutoAssigning(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/wireframes/auto-assign`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        alert(json.error ?? "Failed to auto-assign wireframes");
+      } else {
+        alert("Wireframes auto-generated successfully!");
+      }
+    } catch {
+      alert("Network error. Please try again.");
+    } finally {
+      setAutoAssigning(false);
+    }
+  }, [projectId]);
+
   return (
     <div className="flex gap-0 h-[calc(100vh-10rem)] min-h-[600px] rounded-xl overflow-hidden border border-gray-800">
       {/* Canvas */}
@@ -87,6 +108,16 @@ export default function SitemapEditor({ projectId, initialNodes }: Props) {
             >
               <span>✨</span>
               <span>AI</span>
+            </button>
+ 
+            {/* Auto-assign wireframes */}
+            <button
+              onClick={autoAssignWireframes}
+              disabled={autoAssigning}
+              className="text-xs px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 rounded-md font-medium transition-colors disabled:opacity-50"
+              title="Auto-generate wireframes for all pages (3 credits)"
+            >
+              {autoAssigning ? "Assigning…" : "Auto-assign Wireframes (3 cr)"}
             </button>
             <button
               id="sitemap-add-page"
