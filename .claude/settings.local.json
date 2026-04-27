@@ -6,7 +6,11 @@
       "Bash(npx tsc:*)",
       "Bash(npx tsx:*)",
       "Bash(ls -la apps/web/.env*)",
-      "Bash(vercel env:*)"
+      "Bash(vercel env:*)",
+      "Bash(npm info *)",
+      "Bash(grep *)",
+      "Bash(python3 *)",
+      "Bash(node *)"
     ]
   }
 }
