@@ -7,14 +7,18 @@ import type { Block } from "./WireframeEditor";
 
 export const BLOCK_LAYOUT_VARIANTS: Record<string, string[]> = {
   Navbar:  ["default", "centered", "minimal"],
-  Hero:    ["centered", "split", "minimal", "fullscreen"],
-  Cards:   ["grid-3", "grid-2", "list", "horizontal"],
+  Hero:    ["centered", "split", "minimal", "fullscreen", "angled"],
+  Cards:   ["grid-3", "grid-2", "list", "horizontal", "features"],
   CTA:     ["banner", "split", "minimal"],
   Form:    ["stacked", "inline", "card"],
   Footer:  ["columns", "simple", "centered"],
   Text:    ["body", "two-column", "highlight"],
   Image:   ["full-width", "contained", "gallery"],
   Table:   ["basic", "striped", "compact"],
+  FAQ:     ["accordion", "grid"],
+  Testimonials: ["grid", "carousel", "single"],
+  Pricing: ["cards", "table", "minimal"],
+  Stats:   ["grid", "simple"],
 };
 
 export const DEFAULT_LAYOUTS: Record<string, string> = {
@@ -27,6 +31,10 @@ export const DEFAULT_LAYOUTS: Record<string, string> = {
   Text:    "body",
   Image:   "full-width",
   Table:   "basic",
+  FAQ:     "accordion",
+  Testimonials: "grid",
+  Pricing: "cards",
+  Stats:   "grid",
 };
 
 // ─── Block heights ────────────────────────────────────────────────────────────
@@ -41,6 +49,10 @@ const BLOCK_HEIGHTS: Record<string, number> = {
   Text:    64,
   Image:   100,
   Table:   120,
+  FAQ:     130,
+  Testimonials: 100,
+  Pricing: 150,
+  Stats:   80,
 };
 
 // ─── Accent badge colors ──────────────────────────────────────────────────────
@@ -55,6 +67,10 @@ const BLOCK_ACCENTS: Record<string, string> = {
   Text:    "bg-slate-800/60 text-slate-300 border-slate-600/40",
   Image:   "bg-rose-900/40 text-rose-300 border-rose-700/40",
   Table:   "bg-indigo-900/40 text-indigo-300 border-indigo-700/40",
+  FAQ:     "bg-emerald-900/40 text-emerald-300 border-emerald-700/40",
+  Testimonials: "bg-pink-900/40 text-pink-300 border-pink-700/40",
+  Pricing: "bg-orange-900/40 text-orange-300 border-orange-700/40",
+  Stats:   "bg-cyan-900/40 text-cyan-300 border-cyan-700/40",
 };
 
 // ─── Wireframe primitives ─────────────────────────────────────────────────────
@@ -485,6 +501,112 @@ function ImageGallery() {
   );
 }
 
+function HeroAngled() {
+  return (
+    <div className="relative h-full overflow-hidden flex items-center px-6">
+      <div 
+        className="absolute inset-0 bg-gray-700/10 skew-y-[-6deg] origin-top-left translate-y-4 border-t border-gray-600/40" 
+      />
+      <div className="relative flex flex-col gap-2.5 w-full">
+        <WL w="55%" />
+        <WL w="40%" opacity={0.4} />
+        <WBtn w={64} h={18} accent />
+      </div>
+    </div>
+  );
+}
+
+function CardsFeatures() {
+  return (
+    <div className="grid grid-cols-2 gap-x-4 gap-y-3 px-4 h-full items-center">
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className="flex gap-2.5 items-start">
+          <WCircle size={14} />
+          <div className="flex-1 flex flex-col gap-1.5">
+            <WL w="85%" />
+            <WL w="60%" opacity={0.35} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FAQAccordion() {
+  return (
+    <div className="flex flex-col justify-center gap-2 px-6 h-full">
+      <WL w="30%" className="mb-2" />
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className="border-b border-gray-700/30 py-2 flex items-center justify-between">
+          <WL w="70%" opacity={0.5} />
+          <div className="w-2.5 h-2.5 border-r border-b border-gray-600 rotate-45 mr-1" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TestimonialsGrid() {
+  return (
+    <div className="flex gap-3 px-4 items-center h-full">
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="flex-1 flex flex-col gap-2 p-2 border border-gray-700/20 bg-gray-800/10 rounded-lg">
+          <div className="flex gap-1 mb-1">
+            {[0, 1, 2, 3, 4].map(s => <div key={s} className="w-1.5 h-1.5 rounded-full bg-yellow-500/40" />)}
+          </div>
+          <WL w="90%" opacity={0.6} />
+          <WL w="75%" opacity={0.4} />
+          <div className="flex items-center gap-2 mt-1">
+            <WCircle size={16} />
+            <WL w={32} opacity={0.3} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PricingCards() {
+  return (
+    <div className="flex gap-3 px-4 items-center h-full">
+      {[0, 1, 2].map((i) => (
+        <div 
+          key={i} 
+          className={`flex-1 flex flex-col gap-2 p-3 border rounded-xl items-center text-center ${
+            i === 1 ? "bg-brand-900/10 border-brand-700/40 py-4 -my-2" : "bg-gray-800/20 border-gray-700/40"
+          }`}
+        >
+          <WL w="60%" />
+          <WL w="40%" opacity={0.5} />
+          <div className="flex items-baseline gap-1 my-1">
+            <WL w={24} />
+            <span className="text-[10px] text-gray-600">/mo</span>
+          </div>
+          <div className="w-full flex flex-col gap-1.5 mb-1">
+            <WL w="80%" opacity={0.3} />
+            <WL w="85%" opacity={0.3} />
+            <WL w="70%" opacity={0.3} />
+          </div>
+          <WBtn w="100%" h={18} accent={i === 1} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function StatsGrid() {
+  return (
+    <div className="flex gap-6 px-8 items-center h-full justify-center">
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className="flex flex-col items-center gap-1.5">
+          <WL w={36} className="h-4" />
+          <WL w={48} opacity={0.4} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Table ────────────────────────────────────────────────────────────────────
 
 const TABLE_COLS = [44, 64, 48, 36];
@@ -537,18 +659,37 @@ function TableCompact() {
   );
 }
 
+function GenerativeLayout({ composition }: { composition: any[] }) {
+  return (
+    <div className="flex flex-col justify-center h-full gap-2 px-6">
+      {composition.map((item, i) => {
+        const { type, props } = item;
+        if (type === "WL") return <WL key={i} {...props} />;
+        if (type === "WBox") return <WBox key={i} {...props} />;
+        if (type === "WBtn") return <WBtn key={i} {...props} />;
+        if (type === "WCircle") return <WCircle key={i} {...props} />;
+        return null;
+      })}
+    </div>
+  );
+}
+
 // ─── Layout render map ────────────────────────────────────────────────────────
 
 const LAYOUT_RENDERS: Record<string, Record<string, () => React.ReactElement>> = {
   Navbar:  { default: NavbarDefault, centered: NavbarCentered, minimal: NavbarMinimal },
-  Hero:    { centered: HeroCentered, split: HeroSplit, minimal: HeroMinimal, fullscreen: HeroFullscreen },
-  Cards:   { "grid-3": CardsGrid3, "grid-2": CardsGrid2, list: CardsList, horizontal: CardsHorizontal },
+  Hero:    { centered: HeroCentered, split: HeroSplit, minimal: HeroMinimal, fullscreen: HeroFullscreen, angled: HeroAngled },
+  Cards:   { "grid-3": CardsGrid3, "grid-2": CardsGrid2, list: CardsList, horizontal: CardsHorizontal, features: CardsFeatures },
   CTA:     { banner: CTABanner, split: CTASplit, minimal: CTAMinimal },
   Form:    { stacked: FormStacked, inline: FormInline, card: FormCard },
   Footer:  { columns: FooterColumns, simple: FooterSimple, centered: FooterCentered },
   Text:    { body: TextBody, "two-column": TextTwoColumn, highlight: TextHighlight },
   Image:   { "full-width": ImageFullWidth, contained: ImageContained, gallery: ImageGallery },
   Table:   { basic: TableBasic, striped: TableStriped, compact: TableCompact },
+  FAQ:     { accordion: FAQAccordion, grid: CardsGrid2 },
+  Testimonials: { grid: TestimonialsGrid, carousel: TestimonialsGrid, single: HeroMinimal },
+  Pricing: { cards: PricingCards, table: TableBasic, minimal: CardsGrid3 },
+  Stats:   { grid: StatsGrid, simple: StatsGrid },
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -564,7 +705,11 @@ export default function WireframeBlock({ block, isSelected, onSelect, onDelete }
   const height = BLOCK_HEIGHTS[block.type] ?? 72;
   const accent = BLOCK_ACCENTS[block.type] ?? "bg-gray-800 text-gray-400 border-gray-700";
   const layout = (block.props?.layout as string) || DEFAULT_LAYOUTS[block.type] || "default";
-  const LayoutVisual = LAYOUT_RENDERS[block.type]?.[layout] ?? LAYOUT_RENDERS[block.type]?.["default"];
+
+  // Use generative composition if present, otherwise use preset layout
+  const LayoutVisual = block.composition
+    ? () => <GenerativeLayout composition={block.composition as any[]} />
+    : LAYOUT_RENDERS[block.type]?.[layout] ?? LAYOUT_RENDERS[block.type]?.["default"];
 
   return (
     <div
@@ -587,7 +732,7 @@ export default function WireframeBlock({ block, isSelected, onSelect, onDelete }
         ) : (
           <div className="flex items-center justify-center h-full">
             <span className={`text-xs font-semibold px-2.5 py-1 rounded-md border ${accent} backdrop-blur-sm`}>
-              {block.type}
+              {block.label || block.type}
             </span>
           </div>
         )}
@@ -596,11 +741,16 @@ export default function WireframeBlock({ block, isSelected, onSelect, onDelete }
       {/* Type + layout badge — top-left, shown on hover */}
       <div className="absolute top-1.5 left-1.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
         <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${accent} backdrop-blur-sm`}>
-          {block.type}
+          {block.label || block.type}
         </span>
         <span className="text-[9px] px-1.5 py-0.5 rounded border border-gray-600/50 bg-gray-900/80 text-gray-400 backdrop-blur-sm">
-          {layout}
+          {block.composition ? "Generative" : layout}
         </span>
+        {block.composition && (
+          <span className="text-[9px] px-1.5 py-0.5 rounded border border-purple-600/40 bg-purple-900/60 text-purple-300 backdrop-blur-sm">
+            {block.type}
+          </span>
+        )}
       </div>
 
       {/* Selection ring */}

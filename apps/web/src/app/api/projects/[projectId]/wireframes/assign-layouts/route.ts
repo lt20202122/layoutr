@@ -111,7 +111,12 @@ Sitemap pages to assign layouts for:
 ${JSON.stringify(nodes, null, 2)}
 
 Return a JSON array ONLY — no markdown, no explanation:
-[{"node_id":"...","blocks":[{"type":"Navbar","layout":"default","order_index":0},{"type":"Hero","layout":"centered","order_index":1}]}]`;
+[{"node_id":"...","blocks":[{"type":"Navbar","label":"Main Navigation","layout":"default","order_index":0},{"type":"Hero","label":"Welcome Banner","composition":[{"type":"WL","props":{"w":"70%"}},{"type":"WBtn","props":{"accent":true}}],"order_index":1}]}]
+
+Note on generative layouts:
+- If you want to create a custom layout instead of using a preset "layout" string, provide a "composition" array of primitives.
+- Primitives available: {"type": "WL", "props": {"w": string, "opacity": number}}, {"type": "WBox", "props": {"w": string, "h": number}}, {"type": "WBtn", "props": {"w": number, "h": number, "accent": boolean}}, {"type": "WCircle", "props": {"size": number}}.
+- Use "composition" sparingly; prefer layout presets when they fit.`;
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────
@@ -251,7 +256,13 @@ export async function POST(
   // Parse LLM response
   let assignments: Array<{
     node_id: string;
-    blocks: Array<{ type: string; layout: string; order_index: number }>;
+    blocks: Array<{
+      type: string;
+      label?: string;
+      layout?: string;
+      composition?: any[];
+      order_index: number;
+    }>;
   }>;
   try {
     let cleaned = llmResult.trim();
@@ -284,6 +295,8 @@ export async function POST(
     const toInsert = assignment.blocks.map((b) => ({
       node_id: assignment.node_id,
       type: b.type,
+      label: b.label ?? b.type,
+      composition: b.composition ?? null,
       order_index: b.order_index ?? 0,
       props: {
         ...(BLOCK_DEFAULTS[b.type] ?? {}),

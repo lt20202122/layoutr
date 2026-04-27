@@ -16,6 +16,8 @@ export interface Block {
   id: string;
   node_id: string;
   type: string;
+  label?: string | null;
+  composition?: any[] | null;
   order_index: number;
   props: Record<string, unknown>;
   created_at: string;
@@ -571,14 +573,14 @@ export default function WireframeEditor({
 
   // ── Block update ───────────────────────────────────────────────────────────
   const updateBlock = useCallback(
-    async (blockId: string, props: Record<string, unknown>) => {
+    async (blockId: string, updates: Partial<Block>) => {
       if (!activeNodeId) return;
       const res = await fetch(
         `/api/projects/${projectId}/wireframes/${activeNodeId}/${blockId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ props }),
+          body: JSON.stringify(updates),
         }
       );
       if (!res.ok) return;
@@ -821,23 +823,27 @@ function BlockPropsPanel({
   onUpdate,
 }: {
   block: Block;
-  onUpdate: (props: Record<string, unknown>) => void;
+  onUpdate: (updates: Partial<Block>) => void;
 }) {
   const [localProps, setLocalProps] = useState<Record<string, unknown>>(block.props);
+  const [localLabel, setLocalLabel] = useState(block.label || "");
+  const [localType, setLocalType] = useState(block.type);
   const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     setLocalProps(block.props);
+    setLocalLabel(block.label || "");
+    setLocalType(block.type);
     setDirty(false);
-  }, [block.id, block.props]);
+  }, [block.id, block.props, block.label, block.type]);
 
-  function handleChange(key: string, value: unknown) {
+  function handlePropChange(key: string, value: unknown) {
     setLocalProps((p) => ({ ...p, [key]: value }));
     setDirty(true);
   }
 
-  const variants = BLOCK_LAYOUT_VARIANTS[block.type] ?? [];
-  const currentLayout = (localProps.layout as string) || DEFAULT_LAYOUTS[block.type] || "default";
+  const variants = BLOCK_LAYOUT_VARIANTS[localType] ?? [];
+  const currentLayout = (localProps.layout as string) || DEFAULT_LAYOUTS[localType] || "default";
 
   // Non-layout props
   const otherProps = Object.entries(localProps).filter(([k]) => k !== "layout");
@@ -845,15 +851,44 @@ function BlockPropsPanel({
   return (
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-white">{block.type}</h3>
+        <h3 className="text-sm font-semibold text-white">Block Editor</h3>
         <span className="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded">Props</span>
       </div>
+
+      <div className="space-y-3">
+        <div>
+          <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">
+            Label (Section Name)
+          </label>
+          <input
+            type="text"
+            value={localLabel}
+            onChange={(e) => { setLocalLabel(e.target.value); setDirty(true); }}
+            className="w-full text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+            placeholder="e.g. Why Us"
+          />
+        </div>
+        <div>
+          <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">
+            Type
+          </label>
+          <input
+            type="text"
+            value={localType}
+            onChange={(e) => { setLocalType(e.target.value); setDirty(true); }}
+            className="w-full text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+            placeholder="e.g. Hero"
+          />
+        </div>
+      </div>
+
+      <hr className="border-gray-800" />
 
       {/* Layout picker */}
       {variants.length > 0 && (
         <div>
           <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1.5">
-            Layout
+            Layout Preset
           </label>
           <div className="grid grid-cols-2 gap-1">
             {variants.map((variant) => (
@@ -888,7 +923,7 @@ function BlockPropsPanel({
                   id={`prop-${block.id}-${key}`}
                   rows={3}
                   value={(value as string[]).join("\n")}
-                  onChange={(e) => handleChange(key, e.target.value.split("\n"))}
+                  onChange={(e) => handlePropChange(key, e.target.value.split("\n"))}
                   className="w-full text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none font-mono"
                 />
               ) : typeof value === "number" ? (
@@ -896,7 +931,7 @@ function BlockPropsPanel({
                   id={`prop-${block.id}-${key}`}
                   type="number"
                   value={value}
-                  onChange={(e) => handleChange(key, Number(e.target.value))}
+                  onChange={(e) => handlePropChange(key, Number(e.target.value))}
                   className="w-full text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
               ) : (
@@ -904,7 +939,7 @@ function BlockPropsPanel({
                   id={`prop-${block.id}-${key}`}
                   type="text"
                   value={String(value ?? "")}
-                  onChange={(e) => handleChange(key, e.target.value)}
+                  onChange={(e) => handlePropChange(key, e.target.value)}
                   className="w-full text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
               )}
@@ -916,8 +951,15 @@ function BlockPropsPanel({
       {dirty && (
         <button
           id="wireframe-save-props"
-          onClick={() => { onUpdate(localProps); setDirty(false); }}
-          className="w-full text-xs py-2 bg-brand-600 hover:bg-brand-500 rounded-lg font-semibold transition-colors"
+          onClick={() => {
+            onUpdate({
+              props: localProps,
+              label: localLabel,
+              type: localType,
+            });
+            setDirty(false);
+          }}
+          className="w-full text-xs py-2 bg-brand-600 hover:bg-brand-500 rounded-lg font-semibold transition-colors shadow-lg shadow-brand-900/20"
         >
           Save changes
         </button>

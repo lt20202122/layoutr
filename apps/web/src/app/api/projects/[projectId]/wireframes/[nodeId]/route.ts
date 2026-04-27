@@ -4,7 +4,9 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { ok, err, authenticate } from "@/lib/api";
 
 const CreateBlockSchema = z.object({
-  type: z.enum(["Hero", "Navbar", "Cards", "CTA", "Form", "Footer", "Text", "Image", "Table"]),
+  type: z.string(),
+  label: z.string().optional(),
+  composition: z.array(z.any()).optional(),
   order_index: z.number().int().min(0).optional(),
   props: z.record(z.unknown()).optional(),
 });
@@ -75,6 +77,8 @@ export async function POST(request: NextRequest, { params }: Params) {
     .insert({
       node_id: nodeId,
       type: parsed.data.type,
+      label: parsed.data.label ?? parsed.data.type,
+      composition: parsed.data.composition ?? null,
       order_index: orderIndex,
       props: parsed.data.props ?? {},
     })

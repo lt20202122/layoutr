@@ -130,9 +130,11 @@ export async function POST(
 
     await supabase.from("wireframe_blocks").delete().eq("node_id", node.id);
 
+    const sections = node.metadata?.sections || [];
     const toInsert = blocks.map((b, i) => ({
       node_id: node.id,
       type: b.type,
+      label: sections[i]?.label || b.type,
       order_index: i,
       props: {
         ...(BLOCK_DEFAULTS[b.type] ?? {}),
