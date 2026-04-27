@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { formatCreditsUsd } from "@/lib/credits";
 
 export default function CreditsDisplay({ initialCredits }: { initialCredits: number }) {
   const [credits, setCredits] = useState(initialCredits);

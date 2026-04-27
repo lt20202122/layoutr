@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import BlockLibrary from "./BlockLibrary";
 import WireframeBlock, { BLOCK_LAYOUT_VARIANTS, DEFAULT_LAYOUTS } from "./WireframeBlock";
-import { estimateCredits, formatCreditsUsd, ModelId } from "@/lib/credits";
+import { estimateCredits, ModelId } from "@/lib/credits";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
