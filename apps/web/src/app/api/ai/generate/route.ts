@@ -263,6 +263,7 @@ export async function POST(request: NextRequest) {
       parent_label?: string;
       url_path?: string;
       notes?: string;
+      metadata?: Record<string, unknown>;
     };
     blocks?: Array<{
       type: string;
