@@ -8,7 +8,8 @@ import { createDeepSeek } from "@ai-sdk/deepseek";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ok, err, authenticate } from "@/lib/api";
 import { decryptKey } from "@/lib/crypto";
-import { computeCredits, MIN_CREDITS, CREDIT_VALUE_USD } from "@/lib/credits";
+import { computeCredits, MIN_CREDITS, CREDIT_VALUE_USD, ModelId } from "@/lib/credits";
+import { PLAN_ALLOWED_MODELS, PlanId } from "@/lib/plans";
 import { GoogleGenAI } from "@google/genai";
 
 const defaultAnthropic = createAnthropic();
@@ -173,11 +174,17 @@ export async function POST(
 
     const { data: profile } = await supabase
       .from("user_profiles")
-      .select("credits")
+      .select("credits, plan")
       .eq("id", auth.userId)
       .single();
 
     currentCredits = profile?.credits ?? 0;
+    const userPlan = (profile?.plan as PlanId) ?? "free";
+
+    if (!PLAN_ALLOWED_MODELS[userPlan].includes(model as ModelId)) {
+      return err(`The ${model} model is not available on the ${userPlan} plan. Please upgrade to use it.`, 403);
+    }
+
     if (currentCredits < minRequired) {
       return err(`Insufficient credits. Need at least ${minRequired}, have ${currentCredits}.`, 402);
     }

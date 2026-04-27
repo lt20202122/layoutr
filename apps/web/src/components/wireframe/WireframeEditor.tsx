@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import BlockLibrary from "./BlockLibrary";
 import WireframeBlock, { BLOCK_LAYOUT_VARIANTS, DEFAULT_LAYOUTS } from "./WireframeBlock";
 import { estimateCredits, ModelId } from "@/lib/credits";
+import { PLAN_ALLOWED_MODELS } from "@/lib/plans";
 import { mapSectionToBlock, Section } from "../sitemap/sitemapUtils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -40,6 +41,7 @@ interface Props {
   nodes: SitemapNodeRef[];
   selectedNodeId: string | null;
   initialBlocks: Block[];
+  userPlan: string;
 }
 
 // ─── Default block props ──────────────────────────────────────────────────────
@@ -72,7 +74,7 @@ interface Tier {
 const TIERS: Tier[] = [
   { id: "deepseek-chat", tier: "Starter", modelLabel: "deepseek-v4-flash", provider: "deepseek", dot: "bg-green-400" },
   { id: "claude-sonnet-4-5", tier: "Pro", modelLabel: "claude-sonnet-4.5", provider: "anthropic", dot: "bg-red-400" },
-  { id: "gpt-5.5", tier: "Max", modelLabel: "gpt-5.5", provider: "openai", dot: "bg-purple-400", locked: true },
+  { id: "gpt-5.5", tier: "Max", modelLabel: "gpt-5.5", provider: "openai", dot: "bg-purple-400" },
 ];
 
 // ─── Rule-based scaffold ──────────────────────────────────────────────────────
@@ -150,14 +152,20 @@ function TierDropdown({
   value,
   onChange,
   disabled,
+  userPlan,
 }: {
   value: TierId;
   onChange: (id: TierId) => void;
   disabled?: boolean;
+  userPlan: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const selected = TIERS.find((t) => t.id === value)!;
+
+  // Compute allowed models dynamically
+  const allowedModels = PLAN_ALLOWED_MODELS[userPlan as keyof typeof PLAN_ALLOWED_MODELS] || PLAN_ALLOWED_MODELS.free;
+  const tiersWithLock = TIERS.map((t) => ({ ...t, locked: !allowedModels.includes(t.id) }));
 
   useEffect(() => {
     function handle(e: MouseEvent) {
@@ -191,7 +199,7 @@ function TierDropdown({
       </button>
       {open && (
         <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-gray-900 border border-gray-700 rounded-xl shadow-xl overflow-hidden">
-          {TIERS.map((t) => (
+          {tiersWithLock.map((t) => (
             <button
               key={t.id}
               type="button"
@@ -222,8 +230,8 @@ function TierDropdown({
               {t.locked && (
                 <div className="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 w-48 p-2.5 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all scale-95 group-hover:scale-100 z-[60]">
                   <p className="text-[10px] leading-relaxed text-gray-300">
-                    Avaidable at Pro Plan.{" "}
-                    <span className="text-brand-400 underline decoration-brand-400/30">View plans --&gt;</span>
+                    Model not available on {userPlan} plan.{" "}
+                    <a href="/pricing" className="text-brand-400 underline decoration-brand-400/30">View plans --&gt;</a>
                   </p>
                 </div>
               )}
@@ -242,11 +250,13 @@ function AssignLayoutsModal({
   pageCount,
   onClose,
   onSuccess,
+  userPlan,
 }: {
   projectId: string;
   pageCount: number;
   onClose: () => void;
   onSuccess: () => void;
+  userPlan: string;
 }) {
   const [tierId, setTierId] = useState<TierId>("deepseek-chat");
   const [loading, setLoading] = useState(false);
@@ -317,7 +327,7 @@ function AssignLayoutsModal({
               <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1.5">
                 AI Model
               </label>
-              <TierDropdown value={tierId} onChange={setTierId} disabled={loading} />
+              <TierDropdown value={tierId} onChange={setTierId} disabled={loading} userPlan={userPlan} />
             </div>
 
             {/* Info box */}
@@ -405,6 +415,7 @@ export default function WireframeEditor({
   nodes,
   selectedNodeId,
   initialBlocks,
+  userPlan,
 }: Props) {
   const [activeNodeId, setActiveNodeId] = useState<string | null>(selectedNodeId);
   const [blocks, setBlocks] = useState<Block[]>(initialBlocks);
@@ -810,6 +821,7 @@ export default function WireframeEditor({
           pageCount={pageNodes.length}
           onClose={() => setShowAssignModal(false)}
           onSuccess={reloadBlocks}
+          userPlan={userPlan}
         />
       )}
     </>

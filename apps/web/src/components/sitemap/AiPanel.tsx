@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import type { SitemapNode } from "./sitemapUtils";
 import { estimateCredits, ModelId } from "@/lib/credits";
+import { PLAN_ALLOWED_MODELS } from "@/lib/plans";
 import WaitlistButton from "@/components/ui/WaitlistButton";
 
 // ─── Three-tier model config ──────────────────────────────────────────────────
@@ -39,7 +40,6 @@ const TIERS: Tier[] = [
     modelLabel: "gpt-5.5",
     provider: "openai",
     dot: "bg-purple-400",
-    locked: true,
   },
 ];
 
@@ -53,14 +53,20 @@ function TierDropdown({
   value,
   onChange,
   disabled,
+  userPlan,
 }: {
   value: TierId;
   onChange: (id: TierId) => void;
   disabled?: boolean;
+  userPlan: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const selected = getTier(value);
+
+  // Compute allowed models dynamically
+  const allowedModels = PLAN_ALLOWED_MODELS[userPlan as keyof typeof PLAN_ALLOWED_MODELS] || PLAN_ALLOWED_MODELS.free;
+  const tiersWithLock = TIERS.map((t) => ({ ...t, locked: !allowedModels.includes(t.id) }));
 
   // Close on outside click
   useEffect(() => {
@@ -99,7 +105,7 @@ function TierDropdown({
       {/* Dropdown panel */}
       {open && (
         <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-gray-900 border border-gray-700 rounded-xl shadow-xl overflow-hidden">
-          {TIERS.map((t) => (
+          {tiersWithLock.map((t) => (
             <button
               key={t.id}
               type="button"
@@ -130,8 +136,8 @@ function TierDropdown({
               {t.locked && (
                 <div className="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 w-48 p-2.5 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all scale-95 group-hover:scale-100 z-[60]">
                   <p className="text-[10px] leading-relaxed text-gray-300">
-                    Avaidable at Pro Plan.{" "}
-                    <span className="text-brand-400 underline decoration-brand-400/30">View plans --&gt;</span>
+                    Model not available on {userPlan} plan.{" "}
+                    <a href="/pricing" className="text-brand-400 underline decoration-brand-400/30">View plans --&gt;</a>
                   </p>
                 </div>
               )}
@@ -149,9 +155,10 @@ interface Props {
   projectId: string;
   onNodesUpdated: (nodes: SitemapNode[]) => void;
   onGenerating: (loading: boolean) => void;
+  userPlan: string;
 }
 
-export default function AiPanel({ projectId, onNodesUpdated, onGenerating }: Props) {
+export default function AiPanel({ projectId, onNodesUpdated, onGenerating, userPlan }: Props) {
   const [prompt, setPrompt] = useState("");
   const [tierId, setTierId] = useState<TierId>("deepseek-chat");
   const [loading, setLoading] = useState(false);
@@ -244,7 +251,7 @@ export default function AiPanel({ projectId, onNodesUpdated, onGenerating }: Pro
         <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1.5">
           Model
         </label>
-        <TierDropdown value={tierId} onChange={setTierId} disabled={loading} />
+        <TierDropdown value={tierId} onChange={setTierId} disabled={loading} userPlan={userPlan} />
       </div>
 
       {/* Chat area */}

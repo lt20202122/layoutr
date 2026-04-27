@@ -17,6 +17,14 @@ export default async function WireframePage({ params, searchParams }: Params) {
   const { data: project } = await projectQuery.single();
   if (!project) notFound();
 
+  // Fetch plan
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("plan")
+    .eq("id", user?.id)
+    .single();
+  const userPlan = profile?.plan ?? "free";
+
   // Fetch sitemap nodes for node picker
   const { data: nodes } = await supabase
     .from("sitemap_nodes")
@@ -65,6 +73,7 @@ export default async function WireframePage({ params, searchParams }: Params) {
           created_at: string;
           updated_at: string;
         }>}
+        userPlan={userPlan}
       />
     </div>
   );

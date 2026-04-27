@@ -9,9 +9,10 @@ import AiPanel from "./AiPanel";
 type Props = {
   projectId: string;
   initialNodes: SitemapNode[];
+  userPlan: string;
 };
 
-export default function SitemapEditor({ projectId, initialNodes }: Props) {
+export default function SitemapEditor({ projectId, initialNodes, userPlan }: Props) {
   const [nodes, setNodes] = useState<SitemapNode[]>(initialNodes);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saving, setSaving] = useState<Record<string, boolean>>({});
@@ -185,6 +186,7 @@ export default function SitemapEditor({ projectId, initialNodes }: Props) {
             projectId={projectId}
             onNodesUpdated={(updated) => setNodes(updated as SitemapNode[])}
             onGenerating={setGenerating}
+            userPlan={userPlan}
           />
         )}
       </div>

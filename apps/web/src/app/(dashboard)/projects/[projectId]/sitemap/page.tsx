@@ -22,6 +22,15 @@ export default async function SitemapPage({ params }: Params) {
 
   if (!project) notFound();
 
+  // Fetch plan
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("plan")
+    .eq("id", user?.id)
+    .single();
+
+  const userPlan = profile?.plan ?? "free";
+
   const { data: rawNodes } = await supabase
     .from("sitemap_nodes")
     .select("*")
@@ -55,7 +64,7 @@ export default async function SitemapPage({ params }: Params) {
         </Link>
       </div>
 
-      <SitemapEditor projectId={projectId} initialNodes={nodes} />
+      <SitemapEditor projectId={projectId} initialNodes={nodes} userPlan={userPlan} />
     </div>
   );
 }
