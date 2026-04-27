@@ -17,7 +17,7 @@ layoutr/
 │   ├── cli/                  @layoutr/cli — npx layoutr init
 │   └── shared/               Shared types (future)
 ├── supabase/
-│   └── migrations/           001_initial_schema, 002_credits_design, 003_llm_api_keys_encrypted
+│   └── migrations/           001_initial_schema, 002_credits_design, 003_llm_api_keys_encrypted, 004_waitlist
 └── turbo.json                Turborepo config
 ```
 
@@ -64,21 +64,23 @@ Users/agents can ask Layoutr's built-in AI to generate or modify sitemaps and wi
 | `design_system` | Design tokens per project (colors, typography, spacing) |
 | `api_keys` | REST API keys (`ltr_...` prefix) for MCP/CLI access |
 | `llm_api_keys` | BYOK LLM keys — AES-256-GCM encrypted (`key_ciphertext`, `key_iv`) |
-| `user_profiles` | Credit balance (default 100 free credits per user) |
+| `user_profiles` | Credit balance (default 2000 free credits per user) |
+| `waitlist` | Users awaiting plans and credit top-ups |
 
 ---
 
 ## Credit system
 
-| Tier | Model | Price per 1M | Markup | Est. Credits |
-|------|-------|--------------|--------|--------------|
-| Starter | DeepSeek V4 Flash | $0.14 / $0.28 | 1.5x | 3 (Min) |
-| Pro | Claude Sonnet 4.5 | $3.00 / $15.00 | 2.0x | ~300 |
-| Max | GPT-5.5 | $15.00 / $75.00 | 2.0x | ~1,500 |
+| Tier | Model | ID | Input cr/1M | Output cr/1M | Status |
+|------|-------|----|-------------|--------------|--------|
+| Starter | DeepSeek V4 Flash | `deepseek-chat` | 540 | 2,200 | Active |
+| Pro | Claude Sonnet 4.5 | `claude-sonnet-4-5` | 6,000 | 30,000 | Active |
+| Max | GPT-5.5 | `gpt-5.5` | 30,000 | 150,000 | Locked |
 
-- 1 credit = $0.0001 (0.01 cents)
-- BYOK users: zero credits deducted
-- Default provider keys (env vars) used when user has no BYOK key
+- 1 credit = $0.0001 (1/100th of a cent). 2000 free credits = $0.20.
+- Rates are 2× markup over real API cost, tracked as input/output credit rates per 1M tokens.
+- BYOK users: zero credits deducted. Default provider keys (env vars) used when user has no BYOK key.
+- Min charge: 1 credit per call. Pre-flight check requires 5 / 50 / 300 credits depending on model.
 
 ---
 
@@ -108,7 +110,7 @@ PATCH  /api/projects/[projectId]/wireframes/[nodeId]/[blockId]  Update block
 DELETE /api/projects/[projectId]/wireframes/[nodeId]/[blockId]  Delete block
 
 GET    /api/projects/[projectId]/design-system  Get design tokens
-PUT    /api/projects/[projectId]/design-system  Update design tokens
+PATCH  /api/projects/[projectId]/design-system  Update design tokens
 
 POST   /api/ai/generate                       AI generate sitemap/wireframe (costs credits)
 GET    /api/ai/keys                           List BYOK LLM keys
@@ -122,6 +124,8 @@ DELETE /api/keys/[keyId]                      Revoke API key
 GET    /api/users/me                          Get profile + credits
 DELETE /api/users/me                          Delete account
 GET    /api/users/me/credits                  Get credit balance
+
+POST   /api/waitlist                          Join waitlist (authenticated, upserts by user_id)
 ```
 
 All REST endpoints require `Authorization: Bearer <api-key>` or a valid session cookie.
@@ -228,7 +232,7 @@ Detects which AI coding tools are installed and injects the MCP config block aut
 - Sitemap editor — visual canvas, drag-and-drop, node types, collapsible tree
 - Wireframe editor — pannable/zoomable canvas, 9 block types, props panel
 - Design system tokens per project
-- Credit system (100 free, per-model costs, live balance in header)
+- Credit system (2000 free credits, per-model rates, live balance in header)
 - BYOK LLM key storage (AES-256-GCM encrypted)
 - `/api/ai/generate` — integrated AI for sitemap + wireframe generation
 - MCP server (18 tools) with StdioServerTransport
@@ -241,10 +245,10 @@ Detects which AI coding tools are installed and injects the MCP config block aut
 - Add default provider API keys to Vercel (`ANTHROPIC_API_KEY` etc.)
 - Publish `@layoutr/mcp-server` to npm
 - Publish `@layoutr/cli` to npm
-- OpenAPI spec at `/api/openapi.json`
 - Disable dev bypass before public launch (`NEXT_PUBLIC_DEV_BYPASS=false`)
 - Stripe credit top-up flow
 - User onboarding / empty states
+- Apply migration 004 in Supabase dashboard (waitlist table)
 
 ---
 
@@ -255,6 +259,7 @@ Detects which AI coding tools are installed and injects the MCP config block aut
 | `apps/web/src/lib/supabase/server.ts` | `createClient()` + `createServiceClient()` |
 | `apps/web/src/lib/api.ts` | `authenticate()`, `ok()`, `err()` helpers |
 | `apps/web/src/lib/crypto.ts` | AES-256-GCM `encryptKey()` / `decryptKey()` |
+| `apps/web/src/lib/credits.ts` | `computeCredits()`, `estimateCredits()`, `ModelId`, `CREDIT_VALUE_USD`, `MIN_CREDITS` |
 | `apps/web/src/app/api/ai/generate/route.ts` | AI generation endpoint |
 | `apps/web/src/components/sitemap/SitemapEditor.tsx` | Visual sitemap canvas |
 | `apps/web/src/components/sitemap/AiPanel.tsx` | AI chat panel (model picker, credits) |
@@ -262,4 +267,4 @@ Detects which AI coding tools are installed and injects the MCP config block aut
 | `apps/web/src/components/wireframe/BlockLibrary.tsx` | 9 wireframe block types |
 | `packages/mcp-server/src/index.ts` | MCP server + 18 tools |
 | `packages/cli/src/index.ts` | `npx layoutr init` CLI |
-| `supabase/migrations/` | 3 migrations (schema, credits+design, encrypted keys) |
+| `supabase/migrations/` | 4 migrations (schema, credits+design, encrypted keys, waitlist) |
