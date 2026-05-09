@@ -5,6 +5,7 @@ import { ArrowLeft, LayoutTemplate } from "lucide-react";
 import { useEffect, useState } from "react";
 import WireframeEditor from "@/components/wireframe/WireframeEditor";
 import type { Block } from "@/components/wireframe/WireframeEditor";
+import type { Section } from "@/components/sitemap/sitemapUtils";
 import { getGuestProject, listGuestSitemapNodes, listGuestWireframeBlocks, type GuestProject } from "@/lib/guest-storage";
 
 export default function GuestWireframePage({
@@ -15,7 +16,7 @@ export default function GuestWireframePage({
   nodeId?: string;
 }) {
   const [project, setProject] = useState<GuestProject | null>(null);
-  const [nodes, setNodes] = useState<Array<{ id: string; label: string; type: string; metadata?: { sections?: unknown[] } | null }>>([]);
+  const [nodes, setNodes] = useState<Array<{ id: string; label: string; type: string; metadata?: { sections?: Section[] } | null }>>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [initialBlocks, setInitialBlocks] = useState<Block[]>([]);
   const [ready, setReady] = useState(false);
@@ -26,7 +27,7 @@ export default function GuestWireframePage({
       id: node.id,
       label: node.label,
       type: node.type,
-      metadata: node.metadata as { sections?: unknown[] } | null,
+      metadata: node.metadata as { sections?: Section[] } | null,
     }));
     const nextSelectedNodeId = nextNodes.find((node) => node.id === nodeId)?.id ?? nextNodes[0]?.id ?? null;
 

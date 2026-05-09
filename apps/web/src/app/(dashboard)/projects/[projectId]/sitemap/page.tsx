@@ -3,6 +3,7 @@ import { ArrowRight, Layers3 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SitemapEditor from "@/components/sitemap/SitemapEditor";
+import GuestSitemapPage from "@/components/guest/GuestSitemapPage";
 import type { SitemapNode } from "@/components/sitemap/sitemapUtils";
 
 type Params = { params: Promise<{ projectId: string }> };
@@ -14,8 +15,12 @@ export default async function SitemapPage({ params }: Params) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) {
+    return <GuestSitemapPage projectId={projectId} />;
+  }
+
   const projectQuery = supabase.from("projects").select("*").eq("id", projectId);
-  if (user) projectQuery.eq("user_id", user.id);
+  projectQuery.eq("user_id", user.id);
 
   const { data: project } = await projectQuery.single();
   if (!project) notFound();

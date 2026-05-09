@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, LayoutTemplate } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import GuestWireframePage from "@/components/guest/GuestWireframePage";
 import WireframeEditor from "@/components/wireframe/WireframeEditor";
 
 type Params = {
@@ -18,8 +19,12 @@ export default async function WireframePage({ params, searchParams }: Params) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) {
+    return <GuestWireframePage projectId={projectId} nodeId={nodeId} />;
+  }
+
   const projectQuery = supabase.from("projects").select("*").eq("id", projectId);
-  if (user) projectQuery.eq("user_id", user.id);
+  projectQuery.eq("user_id", user.id);
   const { data: project } = await projectQuery.single();
   if (!project) notFound();
 

@@ -2,12 +2,35 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import ApiKeysManager from "@/components/ui/ApiKeysManager";
 import DeleteAccountSection from "@/components/ui/DeleteAccountSection";
 import WaitlistButton from "@/components/ui/WaitlistButton";
+import Link from "next/link";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (!user) {
+    return (
+      <div className="mx-auto max-w-4xl space-y-6">
+        <section className="glass-panel rounded-[30px] p-6 sm:p-8">
+          <p className="section-label">Settings</p>
+          <h1 className="headline-lg mt-4 text-white">Account features unlock after sign-in.</h1>
+          <p className="body-lg mt-4 max-w-2xl">
+            Guest mode keeps your work in local storage with zero credits. Create an account to manage API keys, use MCP access, and spend credits on integrated AI.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link href="/auth/signup" className="button-primary">
+              Create account
+            </Link>
+            <Link href="/auth/login" className="button-secondary">
+              Sign in
+            </Link>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   const svc = createServiceClient();
   const { data: profile } = await svc
