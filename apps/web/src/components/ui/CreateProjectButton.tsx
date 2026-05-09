@@ -1,5 +1,6 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -39,70 +40,66 @@ export default function CreateProjectButton() {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="px-4 py-2 bg-brand-600 hover:bg-brand-500 rounded-lg text-sm font-semibold transition-colors"
-      >
+      <button onClick={() => setOpen(true)} className="button-primary gap-2">
+        <Plus className="h-4 w-4" />
         New project
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-gray-900 border border-gray-700 rounded-2xl p-6 space-y-5">
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold text-lg">New project</h2>
-              <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-white transition-colors">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4 backdrop-blur-md">
+          <div className="glass-panel-strong w-full max-w-xl rounded-[32px] p-6 sm:p-8">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="section-label">Create workspace</p>
+                <h2 className="mt-3 text-2xl font-semibold text-white">Start a new Layoutr project</h2>
+              </div>
+              <button
+                onClick={() => setOpen(false)}
+                className="rounded-full border border-white/10 bg-white/[0.03] p-2 text-slate-400 hover:text-white"
+              >
+                <Plus className="h-4 w-4 rotate-45" />
               </button>
             </div>
 
-            <form onSubmit={handleCreate} className="space-y-4">
+            <form onSubmit={handleCreate} className="mt-8 space-y-4">
               {error && (
-                <div className="p-3 bg-red-900/40 border border-red-800 rounded-lg text-red-300 text-sm">
+                <div className="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
                   {error}
                 </div>
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">Name</label>
+                <label className="section-label">Project name</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
                   autoFocus
-                  className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-                  placeholder="My awesome project"
+                  className="field"
+                  placeholder="Mobile onboarding revamp"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">
-                  Description <span className="text-gray-500">(optional)</span>
-                </label>
+                <label className="section-label">Description</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  rows={3}
-                  className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
-                  placeholder="Brief description of your project..."
+                  rows={4}
+                  className="field resize-none"
+                  placeholder="A short note about the product, audience, or workstream."
                 />
               </div>
 
-              <div className="flex gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm font-semibold transition-colors"
-                >
+              <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+                <button type="button" onClick={() => setOpen(false)} className="button-secondary">
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading || !name.trim()}
-                  className="flex-1 py-2.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-semibold transition-colors"
+                  className="button-primary disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {loading ? "Creating..." : "Create project"}
                 </button>

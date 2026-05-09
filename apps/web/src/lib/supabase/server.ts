@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { getSupabasePublicEnv } from "./env";
 
 type CookieToSet = { name: string; value: string; options?: Record<string, unknown> };
 
@@ -24,9 +25,11 @@ async function getCookieMethods() {
 }
 
 export async function createClient() {
+  const { url, anonKey } = getSupabasePublicEnv();
+
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    anonKey,
     { cookies: await getCookieMethods() }
   );
 }
@@ -34,8 +37,15 @@ export async function createClient() {
 // Service client uses plain supabase-js (no cookie/session management)
 // so the service role key is used directly in PostgREST, bypassing RLS.
 export function createServiceClient() {
+  const { url } = getSupabasePublicEnv();
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!serviceRoleKey) {
+    throw new Error("Missing Supabase environment variable: SUPABASE_SERVICE_ROLE_KEY");
+  }
+
   return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    url,
+    serviceRoleKey
   );
 }

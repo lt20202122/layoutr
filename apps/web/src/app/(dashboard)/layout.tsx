@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import SignOutButton from "@/components/ui/SignOutButton";
+import AppLogo from "@/components/ui/AppLogo";
 import CreditsDisplay from "@/components/ui/CreditsDisplay";
+import DashboardNav from "@/components/ui/DashboardNav";
+import SignOutButton from "@/components/ui/SignOutButton";
 
-const DEV_MODE = process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_DEV_BYPASS === "true";
+const DEV_MODE =
+  process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_DEV_BYPASS === "true";
 
 export default async function DashboardLayout({
   children,
@@ -11,73 +14,98 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // Fetch credit balance
   const { data: profile } = user
     ? await supabase.from("user_profiles").select("credits").eq("id", user.id).single()
     : { data: null };
 
-  // Fetch projects for dev banner quick links
   const { data: projects } = DEV_MODE
-    ? await supabase.from("projects").select("id, name").order("updated_at", { ascending: false }).limit(5)
+    ? await supabase
+        .from("projects")
+        .select("id, name")
+        .order("updated_at", { ascending: false })
+        .limit(4)
     : { data: null };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* DEV MODE BANNER */}
+    <div className="min-h-screen pb-6 pt-4 sm:pb-8 sm:pt-6">
       {DEV_MODE && (
-        <div className="bg-amber-500/15 border-b border-amber-500/30 text-amber-300 text-xs px-4 py-2 flex items-center gap-4 flex-wrap sticky top-0 z-[60]">
-          <span className="font-bold uppercase tracking-wider text-amber-400">⚠ Dev Mode</span>
-          <span className="text-amber-500/70">Auth disabled</span>
-          <span className="text-amber-500/40">|</span>
-          <Link href="/dashboard" className="hover:text-amber-100 transition-colors font-medium">Dashboard</Link>
-          <Link href="/settings" className="hover:text-amber-100 transition-colors font-medium">Settings</Link>
-          <Link href="/auth/login" className="hover:text-amber-100 transition-colors font-medium">Login</Link>
-          {projects && projects.length > 0 && (
-            <>
-              <span className="text-amber-500/40">|</span>
-              <span className="text-amber-500/70">Projects:</span>
-              {projects.map((p: { id: string; name: string }) => (
-                <Link key={p.id} href={`/projects/${p.id}/sitemap`} className="hover:text-amber-100 transition-colors font-medium underline underline-offset-2">
-                  {p.name}
-                </Link>
-              ))}
-            </>
-          )}
+        <div className="app-shell mb-4">
+          <div className="glass-panel rounded-full px-4 py-2 text-xs text-amber-200">
+            Dev mode is active. Auth bypass is enabled for local editing.
+          </div>
         </div>
       )}
 
-      <header className="border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="font-bold text-lg tracking-tight">
-              Layoutr
-            </Link>
-            <nav className="flex items-center gap-4 text-sm text-gray-400">
-              <Link href="/dashboard" className="hover:text-white transition-colors">Projects</Link>
-              <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-              <Link href="/settings" className="hover:text-white transition-colors">Settings</Link>
-              <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-3">
-            {user ? (
-              <>
-                <span className="text-sm text-gray-400">{user.email}</span>
-                <CreditsDisplay initialCredits={profile?.credits ?? 0} />
-                <SignOutButton />
-              </>
-            ) : (
-              <Link href="/auth/login" className="text-sm text-gray-400 hover:text-white transition-colors">Sign in</Link>
-            )}
+      <div className="app-shell">
+        <div className="glass-panel-strong overflow-hidden rounded-[34px]">
+          <div className="grid min-h-[calc(100vh-3rem)] lg:grid-cols-[260px_minmax(0,1fr)]">
+            <aside className="border-b border-white/8 bg-black/10 p-5 lg:border-b-0 lg:border-r lg:border-white/8">
+              <AppLogo href="/dashboard" />
+
+              <div className="mt-8">
+                <DashboardNav />
+              </div>
+
+              <div className="mt-8 rounded-[26px] border border-white/8 bg-white/[0.03] p-4">
+                <p className="section-label">Workspace</p>
+                <p className="mt-3 text-sm leading-6 text-slate-300">
+                  Structure pages, generate wireframes, and keep the planning layer visible while you ship.
+                </p>
+              </div>
+
+              {projects && projects.length > 0 && (
+                <div className="mt-6 rounded-[26px] border border-white/8 bg-white/[0.03] p-4">
+                  <p className="section-label">Recent</p>
+                  <div className="mt-3 space-y-1">
+                    {projects.map((project: { id: string; name: string }) => (
+                      <Link
+                        key={project.id}
+                        href={`/projects/${project.id}/sitemap`}
+                        className="block rounded-2xl px-3 py-2 text-sm text-slate-400 hover:bg-white/[0.04] hover:text-white"
+                      >
+                        {project.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </aside>
+
+            <div className="min-w-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_18%)]">
+              <header className="flex flex-col gap-4 border-b border-white/8 px-5 py-5 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="section-label">Dashboard</p>
+                  <p className="mt-2 text-sm text-slate-400">
+                    Human-friendly planning surfaces with direct API and MCP access.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  {user ? (
+                    <>
+                      <div className="rounded-full border border-white/8 bg-white/[0.03] px-4 py-2 text-sm text-slate-300">
+                        {user.email}
+                      </div>
+                      <CreditsDisplay initialCredits={profile?.credits ?? 0} />
+                      <SignOutButton />
+                    </>
+                  ) : (
+                    <Link href="/auth/login" className="button-secondary">
+                      Sign in
+                    </Link>
+                  )}
+                </div>
+              </header>
+
+              <main className="px-5 py-6 sm:px-8 sm:py-8">{children}</main>
+            </div>
           </div>
         </div>
-      </header>
-
-      <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-8">
-        {children}
-      </main>
+      </div>
     </div>
   );
 }

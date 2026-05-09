@@ -1,10 +1,9 @@
 "use client";
 
+import { AlertTriangle } from "lucide-react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 export default function DeleteAccountSection() {
-  const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -12,13 +11,11 @@ export default function DeleteAccountSection() {
 
   async function handleDelete() {
     if (confirmText !== "DELETE") return;
-
     setDeleting(true);
     setError(null);
 
     const res = await fetch("/api/users/me", { method: "DELETE" });
     const json = await res.json();
-
     setDeleting(false);
 
     if (!res.ok) {
@@ -26,70 +23,64 @@ export default function DeleteAccountSection() {
       return;
     }
 
-    // Redirect to home
     window.location.href = "/";
   }
 
   return (
     <>
-      <div>
-        <h2 className="text-lg font-semibold text-red-400">Danger Zone</h2>
-        <p className="text-gray-400 text-sm mt-1">
-          Irreversible actions for your account.
-        </p>
-      </div>
-
-      <div className="p-4 bg-red-900/10 border border-red-800/30 rounded-xl">
-        <div className="flex items-center justify-between">
+      <div className="rounded-[28px] border border-red-300/16 bg-red-500/8 p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="font-medium text-sm text-red-300">Delete account</p>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Permanently delete your account and all associated data.
+            <div className="flex items-center gap-2 text-red-100">
+              <AlertTriangle className="h-4 w-4" />
+              <h2 className="text-lg font-semibold">Danger zone</h2>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-red-100/70">
+              Permanently remove your account, projects, and all associated data.
             </p>
           </div>
           <button
             onClick={() => setShowModal(true)}
-            className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded-lg text-sm font-semibold transition-colors"
+            className="inline-flex items-center justify-center rounded-full bg-red-500 px-5 py-2.5 text-sm font-semibold text-white"
           >
-            Delete
+            Delete account
           </button>
         </div>
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl max-w-md w-full p-6 space-y-4">
-            <h3 className="text-lg font-bold text-red-400">Delete Account</h3>
-            <p className="text-sm text-gray-400">
-              This action is permanent and cannot be undone. All your projects, data, and settings will be deleted.
-            </p>
-            <p className="text-sm text-gray-400">
-              Type <strong className="text-red-400 font-mono">DELETE</strong> to confirm:
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
+          <div className="glass-panel-strong w-full max-w-xl rounded-[32px] p-6 sm:p-8">
+            <h3 className="text-2xl font-semibold text-red-100">Delete account</h3>
+            <p className="body-lg mt-4">
+              This is permanent. Type <span className="font-mono font-semibold text-white">DELETE</span> to confirm.
             </p>
             <input
               type="text"
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
               placeholder="DELETE"
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="field mt-5 font-mono"
               autoFocus
             />
-            {error && (
-              <p className="text-sm text-red-400">{error}</p>
-            )}
-            <div className="flex gap-2 pt-2">
+            {error && <p className="mt-3 text-sm text-red-200">{error}</p>}
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                onClick={() => {
+                  setShowModal(false);
+                  setConfirmText("");
+                  setError(null);
+                }}
+                className="button-secondary"
+              >
+                Cancel
+              </button>
               <button
                 onClick={handleDelete}
                 disabled={deleting || confirmText !== "DELETE"}
-                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 rounded-lg text-sm font-semibold transition-colors"
+                className="inline-flex items-center justify-center rounded-full bg-red-500 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
               >
-                {deleting ? "Deleting..." : "Confirm Delete"}
-              </button>
-              <button
-                onClick={() => { setShowModal(false); setConfirmText(""); setError(null); }}
-                className="flex-1 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm font-semibold transition-colors"
-              >
-                Cancel
+                {deleting ? "Deleting..." : "Confirm delete"}
               </button>
             </div>
           </div>

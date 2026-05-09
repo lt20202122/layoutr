@@ -185,3 +185,34 @@ export const STATUS_COLORS: Record<NodeStatus, string> = {
   approved: "text-green-400 bg-green-900/30",
   live:     "text-blue-400 bg-blue-900/30",
 };
+
+export const STATUS_UI_COLORS: Record<NodeStatus, { bg: string, text: string, dot1: string, dot2: string, dot3: string }> = {
+  draft: {
+    bg: "#1e2d42", // Default dark blue/slate
+    text: "text-white/85",
+    dot1: "#ff5f57", // Red
+    dot2: "#ffbd2e", // Yellow
+    dot3: "#28c840", // Green
+  },
+  review: {
+    bg: "#a16207", // Amber 700
+    text: "text-amber-50",
+    dot1: "#fcd34d", // Amber 300
+    dot2: "#f59e0b", // Amber 500
+    dot3: "#d97706", // Amber 600
+  },
+  approved: {
+    bg: "#15803d", // Green 700
+    text: "text-green-50",
+    dot1: "#86efac", // Green 300
+    dot2: "#22c55e", // Green 500
+    dot3: "#16a34a", // Green 600
+  },
+  live: {
+    bg: "#4338ca", // Indigo 700
+    text: "text-indigo-50",
+    dot1: "#a5b4fc", // Indigo 300
+    dot2: "#6366f1", // Indigo 500
+    dot3: "#4f46e5", // Indigo 600
+  },
+};

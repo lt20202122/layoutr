@@ -1,14 +1,14 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import ApiKeysManager from "@/components/ui/ApiKeysManager";
-import LLMKeysManager from "@/components/ui/LLMKeysManager";
 import DeleteAccountSection from "@/components/ui/DeleteAccountSection";
 import WaitlistButton from "@/components/ui/WaitlistButton";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // Fetch credit balance (service client bypasses RLS)
   const svc = createServiceClient();
   const { data: profile } = await svc
     .from("user_profiles")
@@ -22,70 +22,67 @@ export default async function SettingsPage() {
     .order("created_at", { ascending: false });
 
   if (user) keysQuery.eq("user_id", user.id);
-
   const { data: keys } = await keysQuery;
 
   return (
-    <div className="max-w-2xl space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-gray-400 text-sm mt-1">Manage your account and API access</p>
-      </div>
+    <div className="mx-auto max-w-5xl space-y-6">
+      <section className="glass-panel rounded-[30px] p-6 sm:p-8">
+        <p className="section-label">Settings</p>
+        <h1 className="headline-lg mt-4 text-white">Account, credits, and API access.</h1>
+        <p className="body-lg mt-4 max-w-2xl">
+          Keep programmatic access tidy and track the credit balance tied to integrated AI generation.
+        </p>
+      </section>
 
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold">Credits</h2>
-          <p className="text-gray-400 text-sm mt-1">
-            You have <strong className="text-white">{profile?.credits ?? 0}</strong> credits
-            remaining (${(((profile?.credits ?? 0) * 0.0001).toFixed(2))}).
+      <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="glass-panel rounded-[30px] p-6">
+          <p className="section-label">Credits</p>
+          <div className="mt-6 rounded-[28px] border border-brand-300/20 bg-brand-400/10 p-5">
+            <p className="text-4xl font-semibold text-white">{profile?.credits ?? 0}</p>
+            <p className="mt-2 text-sm text-brand-50/80">
+              Approx. ${(((profile?.credits ?? 0) * 0.0001).toFixed(2))} in current balance
+            </p>
+          </div>
+          <p className="body-sm mt-4">
+            Credit top-ups and richer billing controls are still rolling out. Join the waitlist to get notified when purchasing opens.
           </p>
-          <p className="text-gray-500 text-xs mt-2">
-            Plans and credit top-ups are coming soon.
-          </p>
-          <div className="mt-3">
+          <div className="mt-5">
             <WaitlistButton />
+          </div>
+        </div>
+
+        <div className="glass-panel rounded-[30px] p-6">
+          <p className="section-label">Account</p>
+          <div className="mt-6 rounded-[28px] border border-white/8 bg-white/[0.03] p-5">
+            <p className="text-sm text-slate-400">Signed in as</p>
+            <p className="mt-2 text-lg font-medium text-white">{user?.email}</p>
           </div>
         </div>
       </section>
 
-      <section className="space-y-4 pt-4 border-t border-gray-800">
-        <div>
-          <h2 className="text-lg font-semibold">API Keys</h2>
-          <p className="text-gray-400 text-sm mt-1">
-            Use API keys to access Layoutr programmatically or via the MCP server.
-            Keys are prefixed with <code className="text-brand-400 font-mono text-xs">ltr_</code>.
+      <section className="glass-panel rounded-[30px] p-6 sm:p-8">
+        <div className="max-w-3xl">
+          <p className="section-label">API keys</p>
+          <h2 className="mt-4 text-2xl font-semibold text-white">Secure access for REST and MCP clients.</h2>
+          <p className="body-lg mt-4">
+            BYOK and LLM key settings are intentionally removed from this page. This section only manages Layoutr API keys.
           </p>
         </div>
 
-        <div className="p-4 bg-gray-900/50 border border-gray-800 rounded-xl text-sm space-y-1">
-          <p className="text-gray-400">MCP server connection</p>
-          <p className="font-mono text-xs text-gray-300 break-all">
+        <div className="mt-6 rounded-[28px] border border-white/8 bg-black/12 p-5">
+          <p className="section-label">MCP server command</p>
+          <code className="mt-3 block overflow-x-auto font-mono text-sm text-slate-200">
             npx @layoutr/mcp-server --api-key ltr_your_key_here
-          </p>
+          </code>
         </div>
 
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <ApiKeysManager initialKeys={(keys ?? []) as any} />
-      </section>
-
-      <section className="space-y-4 pt-4 border-t border-gray-800">
-        <div>
-          <h2 className="text-lg font-semibold">AI Provider Keys</h2>
-          <p className="text-gray-400 text-sm mt-1">
-            Configure your LLM API keys for AI-assisted features.
-          </p>
+        <div className="mt-6">
+          <ApiKeysManager initialKeys={(keys ?? []) as any} />
         </div>
-        <LLMKeysManager />
       </section>
 
-      <section className="space-y-4 pt-4 border-t border-gray-800">
-        <h2 className="text-lg font-semibold">Account</h2>
-        <p className="text-gray-400 text-sm">Logged in as <strong>{user?.email}</strong></p>
-      </section>
-
-      <section className="space-y-4 pt-4 border-t border-gray-800">
-        <DeleteAccountSection />
-      </section>
+      <DeleteAccountSection />
     </div>
   );
 }

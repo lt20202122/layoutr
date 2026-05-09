@@ -8,98 +8,75 @@ import { createGroq } from "@ai-sdk/groq";
 import { createDeepSeek } from "@ai-sdk/deepseek";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ok, err, authenticate } from "@/lib/api";
-import { decryptKey } from "@/lib/crypto";
 import { computeCredits, MIN_CREDITS, CREDIT_VALUE_USD, ModelId } from "@/lib/credits";
 import { PLAN_ALLOWED_MODELS, PlanId } from "@/lib/plans";
 
-// Singleton default providers (use env-var API keys when no BYOK)
 const defaultAnthropic = createAnthropic();
 const defaultOpenAI = createOpenAI();
 const defaultGoogle = createGoogleGenerativeAI();
 const defaultGroq = createGroq();
 const defaultDeepSeek = createDeepSeek();
 
-// ─── Schemas ─────────────────────────────────────────────────────────────────
-
 const GenerateSchema = z.object({
   prompt: z.string().min(1).max(4000),
   project_id: z.string().uuid(),
   target: z.enum(["sitemap", "wireframe"]),
-  // 2026 Tiers
   model: z
     .enum(["deepseek-chat", "claude-sonnet-4-5", "gpt-5.5"])
     .default("deepseek-chat"),
   provider: z.enum(["anthropic", "openai", "google", "groq", "deepseek"]).default("deepseek"),
-  node_id: z.string().uuid().optional(), // Required for wireframe target
+  node_id: z.string().uuid().optional(),
 });
-
-// ─── Minimum balance required to start a call (pre-flight check) ─────────────
 
 function minBalanceRequired(model: string): number {
   if (model === "deepseek-chat") return MIN_CREDITS;
   if (model === "claude-sonnet-4-5") return 50;
-  return 300; // Safe pre-flight for GPT-5.5
+  return 300;
 }
-
-// ─── Provider factory ─────────────────────────────────────────────────────────
 
 type ProviderKey = "anthropic" | "openai" | "google" | "groq" | "deepseek";
 
-// Internal enum IDs use dashes; map to actual API model IDs where they differ
 const MODEL_ID_MAP: Record<string, string> = {
   "claude-sonnet-4-5": "claude-sonnet-4-5",
-  "gpt-5.5":           "gpt-5.5",
+  "gpt-5.5": "gpt-5.5",
 };
 
 function resolveModelId(model: string): string {
   return MODEL_ID_MAP[model] ?? model;
 }
 
-function buildModel(provider: ProviderKey, model: string, byokKey?: string) {
+function buildModel(provider: ProviderKey, model: string) {
   const resolvedModel = resolveModelId(model);
   switch (provider) {
     case "anthropic":
-      return byokKey
-        ? createAnthropic({ apiKey: byokKey })(resolvedModel)
-        : defaultAnthropic(resolvedModel);
+      return defaultAnthropic(resolvedModel);
     case "openai":
-      return byokKey
-        ? createOpenAI({ apiKey: byokKey })(resolvedModel)
-        : defaultOpenAI(resolvedModel);
+      return defaultOpenAI(resolvedModel);
     case "google":
-      return byokKey
-        ? createGoogleGenerativeAI({ apiKey: byokKey })(resolvedModel)
-        : defaultGoogle(resolvedModel);
+      return defaultGoogle(resolvedModel);
     case "groq":
-      return byokKey
-        ? createGroq({ apiKey: byokKey })(resolvedModel)
-        : defaultGroq(resolvedModel);
+      return defaultGroq(resolvedModel);
     case "deepseek":
-      return byokKey
-        ? createDeepSeek({ apiKey: byokKey })(resolvedModel)
-        : defaultDeepSeek(resolvedModel);
+      return defaultDeepSeek(resolvedModel);
     default:
       throw new Error(`Unknown provider: ${provider}`);
   }
 }
 
-// ─── System prompts ───────────────────────────────────────────────────────────
-
 function buildSitemapSystemPrompt(existingNodes: unknown[]): string {
-  // Build a label-based tree view so the AI can see the parent-child structure
   const nodeList = existingNodes as Array<{ id: string; label: string; parent_id: string | null }>;
   const idToLabel = new Map<string, string>();
-  for (const n of nodeList) idToLabel.set(n.id, n.label);
+  for (const node of nodeList) idToLabel.set(node.id, node.label);
 
   const childrenByParent = new Map<string, string[]>();
   const roots: string[] = [];
-  for (const n of nodeList) {
-    if (n.parent_id && idToLabel.has(n.parent_id)) {
-      const pl = idToLabel.get(n.parent_id)!;
-      if (!childrenByParent.has(pl)) childrenByParent.set(pl, []);
-      childrenByParent.get(pl)!.push(n.label);
+  for (const node of nodeList) {
+    if (node.parent_id && idToLabel.has(node.parent_id)) {
+      const parentLabel = idToLabel.get(node.parent_id)!;
+      if (!childrenByParent.has(parentLabel)) childrenByParent.set(parentLabel, []);
+      childrenByParent.get(parentLabel)!.push(node.label);
     } else {
-      roots.push(n.label);
+      roots.push(node.label);
     }
   }
 
@@ -123,7 +100,7 @@ Each operation must follow this exact shape:
 - The homepage (tree root, labeled [HOMEPAGE] in the tree below) has NO parent_label.
 - EVERY other page MUST have a parent_label matching its parent node's label exactly.
 - All top-level pages must be children of the homepage. Example: if homepage is "Home", set parent_label: "Home" on every top-level page.
-- Sub-pages must link to their direct parent (e.g., a "Team" page under "About" → parent_label: "About").
+- Sub-pages must link to their direct parent (e.g., a "Team" page under "About" -> parent_label: "About").
 - If no homepage exists yet, create one first. Then link all other pages under it.
 
 Current sitemap tree (labels, [HOMEPAGE] = root node):
@@ -134,7 +111,7 @@ ${JSON.stringify(existingNodes, null, 2)}
 
 For "create" operations on pages, include a "metadata" object with a "sections" array. Use a professional baseline: "Header" -> "Hero" -> 1-3 content sections (be creative: "Features", "Pricing", "Team", "CTA", etc.) -> "Footer". Also include a "blocks" array with wireframe blocks for that page (Navbar at order 0, Hero at order 1, content sections, Footer last).
 
-Respond ONLY with a valid JSON array — no markdown, no explanation.`;
+Respond ONLY with a valid JSON array - no markdown, no explanation.`;
 }
 
 function buildWireframeSystemPrompt(existingBlocks: unknown[]): string {
@@ -144,10 +121,8 @@ Each operation: { "action": "create" | "update" | "delete", "block": { "type": "
 Current blocks (${existingBlocks.length} blocks):
 ${JSON.stringify(existingBlocks, null, 2)}
 
-Respond ONLY with a valid JSON array — no markdown, no explanation.`;
+Respond ONLY with a valid JSON array - no markdown, no explanation.`;
 }
-
-// ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
   const auth = await authenticate(request);
@@ -160,66 +135,40 @@ export async function POST(request: NextRequest) {
   const { prompt, project_id, target, model, provider, node_id } = parsed.data;
   const supabase = createServiceClient();
 
-  // ── Verify project ownership ──────────────────────────────────────────────
   const { data: project } = await supabase
     .from("projects")
     .select("id")
     .eq("id", project_id)
     .eq("user_id", auth.userId)
     .single();
-
   if (!project) return err("Project not found", 404);
 
-  // ── BYOK check ────────────────────────────────────────────────────────────
-  let byokKey: string | undefined;
-  const { data: llmKey } = await supabase
-    .from("llm_api_keys")
-    .select("key_ciphertext, key_iv")
-    .eq("user_id", auth.userId)
-    .eq("provider", provider)
-    .single();
-
-  if (llmKey) {
-    try {
-      byokKey = decryptKey(llmKey.key_ciphertext, llmKey.key_iv);
-    } catch {
-      return err("Failed to decrypt BYOK key — check LLM_ENCRYPTION_KEY env var", 500);
-    }
-  }
-
-  // ── Credit pre-flight check (skip if BYOK) ───────────────────────────────
   const minRequired = minBalanceRequired(model);
   let currentCredits = 0;
   let creditsRemaining = 0;
 
-  if (!byokKey) {
-    // Ensure a profile row exists (handles users created before the signup trigger)
-    await supabase
-      .from("user_profiles")
-      .upsert({ id: auth.userId, credits: 100 }, { onConflict: "id", ignoreDuplicates: true });
+  await supabase
+    .from("user_profiles")
+    .upsert({ id: auth.userId, credits: 100 }, { onConflict: "id", ignoreDuplicates: true });
 
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("credits, plan")
-      .eq("id", auth.userId)
-      .single();
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("credits, plan")
+    .eq("id", auth.userId)
+    .single();
 
-    currentCredits = profile?.credits ?? 0;
-    const userPlan = (profile?.plan as PlanId) ?? "free";
+  currentCredits = profile?.credits ?? 0;
+  const userPlan = (profile?.plan as PlanId) ?? "free";
 
-    // Enforce plan model limits
-    if (!PLAN_ALLOWED_MODELS[userPlan].includes(model as ModelId)) {
-      return err(`The ${model} model is not available on the ${userPlan} plan. Please upgrade to use it.`, 403);
-    }
-
-    if (currentCredits < minRequired) {
-      return err(`Insufficient credits. Need at least ${minRequired}, have ${currentCredits}.`, 402);
-    }
+  if (!PLAN_ALLOWED_MODELS[userPlan].includes(model as ModelId)) {
+    return err(`The ${model} model is not available on the ${userPlan} plan. Please upgrade to use it.`, 403);
   }
 
-  // ── Fetch current state ───────────────────────────────────────────────────
-  let existingItems: unknown[] = [];
+  if (currentCredits < minRequired) {
+    return err(`Insufficient credits. Need at least ${minRequired}, have ${currentCredits}.`, 402);
+  }
 
+  let existingItems: unknown[] = [];
   if (target === "sitemap") {
     const { data: nodes } = await supabase
       .from("sitemap_nodes")
@@ -227,7 +176,7 @@ export async function POST(request: NextRequest) {
       .eq("project_id", project_id)
       .order("order_index");
     existingItems = nodes ?? [];
-  } else if (target === "wireframe") {
+  } else {
     if (!node_id) return err("node_id is required for wireframe target");
     const { data: blocks } = await supabase
       .from("wireframe_blocks")
@@ -237,7 +186,6 @@ export async function POST(request: NextRequest) {
     existingItems = blocks ?? [];
   }
 
-  // ── Call LLM ──────────────────────────────────────────────────────────────
   let llmResult: string;
   let actualCost = minRequired;
 
@@ -247,30 +195,26 @@ export async function POST(request: NextRequest) {
         ? buildSitemapSystemPrompt(existingItems)
         : buildWireframeSystemPrompt(existingItems);
 
-    const llmModel = buildModel(provider as ProviderKey, model, byokKey);
+    const llmModel = buildModel(provider as ProviderKey, model);
     const { text, usage } = await generateText({
       model: llmModel,
       system: systemPrompt,
       prompt,
     });
+
     llmResult = text;
-    if (!byokKey) {
-      actualCost = computeCredits(
-        model,
-        (usage as any).promptTokens ?? 0,
-        (usage as any).completionTokens ?? 0
-      );
-    }
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "LLM call failed";
-    return err(`LLM error: ${msg}`, 502);
+    actualCost = computeCredits(
+      model,
+      (usage as any).promptTokens ?? 0,
+      (usage as any).completionTokens ?? 0
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "LLM call failed";
+    return err(`LLM error: ${message}`, 502);
   }
 
-  if (!byokKey) {
-    creditsRemaining = Math.max(0, currentCredits - actualCost);
-  }
+  creditsRemaining = Math.max(0, currentCredits - actualCost);
 
-  // ── Parse LLM response ────────────────────────────────────────────────────
   let operations: Array<{
     action: "create" | "update" | "delete";
     node?: {
@@ -294,8 +238,6 @@ export async function POST(request: NextRequest) {
   }>;
 
   try {
-    // Strip markdown code fences if the LLM wrapped the JSON
-    // More robust regex: find the first '[' or '{' and the last ']' or '}'
     let cleaned = llmResult.trim();
     const firstBracket = Math.min(
       cleaned.indexOf("[") === -1 ? Infinity : cleaned.indexOf("["),
@@ -313,64 +255,62 @@ export async function POST(request: NextRequest) {
     return err("LLM returned invalid JSON. Please try again.", 502);
   }
 
-  // ── Apply operations ──────────────────────────────────────────────────────
   const labelToId = new Map<string, string>();
-  (existingItems as Array<{ id: string; label: string }>).forEach((n) =>
-    labelToId.set(n.label, n.id)
-  );
+  (existingItems as Array<{ id: string; label: string }>).forEach((node) => {
+    labelToId.set(node.label, node.id);
+  });
 
   const results: unknown[] = [];
 
   for (const op of operations) {
     if (target === "sitemap" && op.node) {
-      const n = op.node;
+      const node = op.node;
 
       if (op.action === "create") {
         const siblings = (existingItems as Array<{ parent_id: string | null }>).filter(
-          (x) => x.parent_id === (n.parent_label ? (labelToId.get(n.parent_label) ?? null) : null)
+          (item) => item.parent_id === (node.parent_label ? (labelToId.get(node.parent_label) ?? null) : null)
         );
         const { data } = await supabase
           .from("sitemap_nodes")
           .insert({
             project_id,
-            label: n.label,
-            type:
-              (n.type as "page" | "section" | "folder" | "link" | "modal" | "component") ?? "page",
-            parent_id: n.parent_label ? (labelToId.get(n.parent_label) ?? null) : null,
-            url_path: n.url_path ?? null,
-            notes: n.notes ?? null,
-            metadata: n.metadata ?? null,
+            label: node.label,
+            type: (node.type as "page" | "section" | "folder" | "link" | "modal" | "component") ?? "page",
+            parent_id: node.parent_label ? (labelToId.get(node.parent_label) ?? null) : null,
+            url_path: node.url_path ?? null,
+            notes: node.notes ?? null,
+            metadata: node.metadata ?? null,
             order_index: siblings.length,
           })
           .select()
           .single();
+
         if (data) {
-          labelToId.set(n.label, data.id);
+          labelToId.set(node.label, data.id);
           results.push(data);
 
-          // Also create wireframe blocks for this node if provided
           if (op.blocks && op.blocks.length > 0) {
-            const blockRows = op.blocks.map((b, i) => ({
+            const blockRows = op.blocks.map((block, index) => ({
               project_id,
               node_id: data.id,
-              type: b.type,
-              order_index: b.order_index ?? i,
-              props: b.props ?? {},
+              type: block.type,
+              order_index: block.order_index ?? index,
+              props: block.props ?? {},
             }));
             await supabase.from("wireframe_blocks").insert(blockRows);
           }
         }
       } else if (op.action === "update") {
-        const nodeId = labelToId.get(n.label);
+        const nodeId = labelToId.get(node.label);
         if (nodeId) {
           const { data } = await supabase
             .from("sitemap_nodes")
             .update({
-              ...(n.type && {
-                type: n.type as "page" | "section" | "folder" | "link" | "modal" | "component",
+              ...(node.type && {
+                type: node.type as "page" | "section" | "folder" | "link" | "modal" | "component",
               }),
-              ...(n.url_path !== undefined && { url_path: n.url_path }),
-              ...(n.notes !== undefined && { notes: n.notes }),
+              ...(node.url_path !== undefined && { url_path: node.url_path }),
+              ...(node.notes !== undefined && { notes: node.notes }),
             })
             .eq("id", nodeId)
             .select()
@@ -378,39 +318,37 @@ export async function POST(request: NextRequest) {
           if (data) results.push(data);
         }
       } else if (op.action === "delete") {
-        const nodeId = labelToId.get(n.label);
+        const nodeId = labelToId.get(node.label);
         if (nodeId) {
           await supabase.from("sitemap_nodes").delete().eq("id", nodeId);
-          results.push({ deleted: true, label: n.label });
+          results.push({ deleted: true, label: node.label });
         }
       }
     } else if (target === "wireframe" && node_id && op.block) {
-      const b = op.block;
+      const block = op.block;
       if (op.action === "create") {
         const { data } = await supabase
           .from("wireframe_blocks")
           .insert({
             project_id,
             node_id,
-            type: b.type,
-            order_index: b.order_index ?? existingItems.length + results.length,
-            props: b.props ?? {},
+            type: block.type,
+            order_index: block.order_index ?? existingItems.length + results.length,
+            props: block.props ?? {},
           })
           .select()
           .single();
         if (data) results.push(data);
       } else if (op.action === "update") {
-        // For wireframes, we match by type if no ID, or just take the first of type
-        // Better: LLM should ideally provide ID or order_index, but for now we match by type in existing
         const existing = (existingItems as Array<{ id: string; type: string }>).find(
-          (x) => x.type === b.type
+          (item) => item.type === block.type
         );
         if (existing) {
           const { data } = await supabase
             .from("wireframe_blocks")
             .update({
-              ...(b.props && { props: b.props }),
-              ...(b.order_index !== undefined && { order_index: b.order_index }),
+              ...(block.props && { props: block.props }),
+              ...(block.order_index !== undefined && { order_index: block.order_index }),
             })
             .eq("id", existing.id)
             .select()
@@ -419,49 +357,44 @@ export async function POST(request: NextRequest) {
         }
       } else if (op.action === "delete") {
         const existing = (existingItems as Array<{ id: string; type: string }>).find(
-          (x) => x.type === b.type
+          (item) => item.type === block.type
         );
         if (existing) {
           await supabase.from("wireframe_blocks").delete().eq("id", existing.id);
-          results.push({ deleted: true, type: b.type });
+          results.push({ deleted: true, type: block.type });
         }
       }
     }
   }
 
-  // ── Deduct credits based on actual token usage (only if not BYOK) ────────
-  if (!byokKey) {
-    await supabase
-      .from("user_profiles")
-      .update({ credits: creditsRemaining })
-      .eq("id", auth.userId);
-  }
+  await supabase
+    .from("user_profiles")
+    .update({ credits: creditsRemaining })
+    .eq("id", auth.userId);
 
-  // ── Fetch updated state ──────────────────────────────────────────────────
-  let finalNodes: unknown[] = [];
+  let finalItems: unknown[] = [];
   if (target === "sitemap") {
     const { data: updatedNodes } = await supabase
       .from("sitemap_nodes")
       .select("*")
       .eq("project_id", project_id)
       .order("order_index");
-    finalNodes = updatedNodes ?? [];
+    finalItems = updatedNodes ?? [];
   } else {
     const { data: updatedBlocks } = await supabase
       .from("wireframe_blocks")
       .select("*")
       .eq("node_id", node_id)
       .order("order_index");
-    finalNodes = updatedBlocks ?? [];
+    finalItems = updatedBlocks ?? [];
   }
 
   return ok({
-    nodes: target === "sitemap" ? finalNodes : [],
-    blocks: target === "wireframe" ? finalNodes : [],
+    nodes: target === "sitemap" ? finalItems : [],
+    blocks: target === "wireframe" ? finalItems : [],
     operations_applied: results.length,
-    credits_used: byokKey ? 0 : actualCost,
-    credits_cost_usd: byokKey ? 0 : actualCost * CREDIT_VALUE_USD,
-    credits_remaining: byokKey ? null : creditsRemaining,
-    byok: !!byokKey,
+    credits_used: actualCost,
+    credits_cost_usd: actualCost * CREDIT_VALUE_USD,
+    credits_remaining: creditsRemaining,
   });
 }

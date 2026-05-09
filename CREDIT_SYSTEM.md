@@ -39,11 +39,9 @@ credits_used = ceil((cost_usd / 0.0001) * markup)
 3.  **Transparency**: The UI shows both credits and USD cost (e.g., `Used 42 credits ($0.0042)`).
 4.  **Flexibility**: Adding new models only requires adding their per-million token rates to `apps/web/src/lib/credits.ts`.
 
-## 5. BYOK (Bring Your Own Key)
+## 5. Platform-Managed Keys
 
-If a user has configured their own API key (via Settings), the system **bypasses credit deduction entirely**.
-- **Credits Used**: 0
-- **Cost**: Charged directly to the user's provider account (Anthropic/DeepSeek).
+Layoutr uses platform-managed provider keys for AI calls. Credits are always deducted based on actual token usage, and provider key configuration stays server-side.
 
 ## 6. Implementation Files
 

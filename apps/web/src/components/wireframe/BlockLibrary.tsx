@@ -1,18 +1,19 @@
 "use client";
 
+import { AlignLeft, AppWindow, FormInput, GalleryHorizontal, LayoutGrid, PanelTop, RectangleEllipsis, Table2 } from "lucide-react";
 import { type BlockType } from "./WireframeEditor";
 import { BLOCK_LAYOUT_VARIANTS } from "./WireframeBlock";
 
-const BLOCKS: { type: BlockType; icon: string; description: string }[] = [
-  { type: "Navbar",  icon: "≡",  description: "Navigation bar" },
-  { type: "Hero",    icon: "★",  description: "Full-width hero section" },
-  { type: "Cards",   icon: "⊞",  description: "Feature cards grid" },
-  { type: "CTA",     icon: "→",  description: "Call-to-action banner" },
-  { type: "Form",    icon: "⊟",  description: "Input form" },
-  { type: "Text",    icon: "T",  description: "Text content" },
-  { type: "Image",   icon: "⊡",  description: "Image placeholder" },
-  { type: "Table",   icon: "⊞",  description: "Data table" },
-  { type: "Footer",  icon: "▬",  description: "Page footer" },
+const BLOCKS: { type: BlockType; icon: React.ComponentType<{ className?: string }>; description: string }[] = [
+  { type: "Navbar", icon: PanelTop, description: "Navigation bar" },
+  { type: "Hero", icon: AppWindow, description: "Primary hero section" },
+  { type: "Cards", icon: LayoutGrid, description: "Feature cards grid" },
+  { type: "CTA", icon: RectangleEllipsis, description: "Call-to-action banner" },
+  { type: "Form", icon: FormInput, description: "Input form" },
+  { type: "Text", icon: AlignLeft, description: "Text content" },
+  { type: "Image", icon: GalleryHorizontal, description: "Image placeholder" },
+  { type: "Table", icon: Table2, description: "Data table" },
+  { type: "Footer", icon: PanelTop, description: "Page footer" },
 ];
 
 interface Props {
@@ -26,18 +27,16 @@ export default function BlockLibrary({ disabled }: Props) {
   }
 
   return (
-    <div className="w-44 shrink-0 bg-gray-950 border-r border-gray-800 flex flex-col">
-      {/* Header */}
-      <div className="px-3 py-3 border-b border-gray-800">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Blocks</p>
-        {disabled && (
-          <p className="text-[10px] text-gray-600 mt-0.5">Pick a page first</p>
-        )}
+    <div className="flex w-64 shrink-0 flex-col border-r border-white/8 bg-black/12">
+      <div className="border-b border-white/8 px-4 py-4">
+        <p className="section-label">Blocks</p>
+        <p className="mt-2 text-sm text-slate-400">
+          {disabled ? "Choose a page before placing blocks." : "Drag blocks onto the canvas."}
+        </p>
       </div>
 
-      {/* Block tiles */}
-      <div className="flex-1 p-2 space-y-1 overflow-y-auto">
-        {BLOCKS.map(({ type, icon, description }) => {
+      <div className="flex-1 space-y-2 overflow-y-auto p-3">
+        {BLOCKS.map(({ type, icon: Icon, description }) => {
           const variantCount = BLOCK_LAYOUT_VARIANTS[type]?.length ?? 0;
           return (
             <div
@@ -45,41 +44,27 @@ export default function BlockLibrary({ disabled }: Props) {
               id={`block-library-${type.toLowerCase()}`}
               draggable={!disabled}
               onDragStart={(e) => onDragStart(e, type)}
-              title={`${description} — ${variantCount} layout${variantCount !== 1 ? "s" : ""}`}
-              className={`
-                group flex items-center gap-2.5 px-2.5 py-2 rounded-lg border transition-all duration-150
-                ${disabled
-                  ? "border-gray-800 bg-gray-900/30 opacity-40 cursor-not-allowed"
-                  : "border-gray-800 bg-gray-900 hover:border-brand-600/60 hover:bg-brand-900/20 cursor-grab active:cursor-grabbing active:scale-95 active:border-brand-500"
-                }
-              `}
+              title={`${description} - ${variantCount} layouts`}
+              className={`rounded-[24px] border p-3 ${
+                disabled
+                  ? "cursor-not-allowed border-white/6 bg-white/[0.02] opacity-40"
+                  : "cursor-grab border-white/8 bg-white/[0.03] hover:border-brand-300/25 hover:bg-brand-400/10 active:cursor-grabbing"
+              }`}
             >
-              <span
-                className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-bold shrink-0 transition-colors
-                  ${disabled
-                    ? "bg-gray-800 text-gray-600"
-                    : "bg-gray-800 text-gray-300 group-hover:bg-brand-800/40 group-hover:text-brand-300"
-                  }`}
-              >
-                {icon}
-              </span>
-              <span className="flex-1 text-xs text-gray-300 font-medium truncate">{type}</span>
-              {variantCount > 0 && !disabled && (
-                <span className="text-[9px] text-gray-600 group-hover:text-gray-500 shrink-0 font-mono">
-                  {variantCount}
-                </span>
-              )}
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-black/10">
+                  <Icon className="h-4 w-4 text-brand-200" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-white">{type}</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+                </div>
+                {!disabled && <span className="text-[11px] font-mono text-slate-500">{variantCount}</span>}
+              </div>
             </div>
           );
         })}
       </div>
-
-      {/* Footer hint */}
-      {!disabled && (
-        <div className="px-3 py-2 border-t border-gray-800">
-          <p className="text-[10px] text-gray-600">Drag onto canvas · change layout in props</p>
-        </div>
-      )}
     </div>
   );
 }

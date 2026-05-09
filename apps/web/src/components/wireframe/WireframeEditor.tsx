@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import BlockLibrary from "./BlockLibrary";
@@ -7,7 +7,7 @@ import { estimateCredits, ModelId } from "@/lib/credits";
 import { PLAN_ALLOWED_MODELS } from "@/lib/plans";
 import { mapSectionToBlock, Section } from "../sitemap/sitemapUtils";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export type BlockType =
   | "Hero" | "Navbar" | "Cards" | "CTA" | "Form"
@@ -44,7 +44,7 @@ interface Props {
   userPlan: string;
 }
 
-// ─── Default block props ──────────────────────────────────────────────────────
+// â”€â”€â”€ Default block props â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const BLOCK_DEFAULTS: Record<BlockType, Record<string, unknown>> = {
   Navbar: { title: "My App", links: ["Home", "About", "Contact"] },
@@ -52,13 +52,13 @@ const BLOCK_DEFAULTS: Record<BlockType, Record<string, unknown>> = {
   Cards: { count: 3, title: "Features" },
   CTA: { headline: "Ready to start?", cta: "Sign Up Free" },
   Form: { fields: ["Name", "Email", "Message"], submitLabel: "Send" },
-  Footer: { columns: 3, copyright: "© 2024" },
+  Footer: { columns: 3, copyright: "Â© 2024" },
   Text: { content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
   Image: { alt: "Image placeholder", caption: "" },
   Table: { columns: ["Name", "Status", "Date"], rows: 5 },
 };
 
-// ─── AI tier config (mirrors AiPanel) ────────────────────────────────────────
+// â”€â”€â”€ AI tier config (mirrors AiPanel) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 type TierId = ModelId;
 
@@ -77,7 +77,7 @@ const TIERS: Tier[] = [
   { id: "gpt-5.5", tier: "Max", modelLabel: "gpt-5.5", provider: "openai", dot: "bg-purple-400" },
 ];
 
-// ─── Rule-based scaffold ──────────────────────────────────────────────────────
+// â”€â”€â”€ Rule-based scaffold â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function getDefaultBlocksForPage(label: string, sections?: Section[]) {
   if (sections && sections.length > 0) {
@@ -146,7 +146,7 @@ function getDefaultBlocksForPage(label: string, sections?: Section[]) {
   ];
 }
 
-// ─── Tier dropdown (for Assign Layouts modal) ─────────────────────────────────
+// â”€â”€â”€ Tier dropdown (for Assign Layouts modal) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function TierDropdown({
   value,
@@ -187,7 +187,7 @@ function TierDropdown({
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${selected.dot}`} />
           <span className="font-medium">{selected.tier}</span>
           <span className="text-gray-500 truncate">
-            {selected.modelLabel} · {estimateCredits(selected.id).label} cr
+            {selected.modelLabel} Â· {estimateCredits(selected.id).label} cr
           </span>
         </span>
         <svg
@@ -243,7 +243,7 @@ function TierDropdown({
   );
 }
 
-// ─── Assign Layouts modal ─────────────────────────────────────────────────────
+// â”€â”€â”€ Assign Layouts modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function AssignLayoutsModal({
   projectId,
@@ -266,7 +266,6 @@ function AssignLayoutsModal({
     credits_used: number;
     credits_cost_usd: number;
     credits_remaining: number | null;
-    byok: boolean;
   } | null>(null);
 
   const tier = TIERS.find((t) => t.id === tierId)!;
@@ -304,7 +303,7 @@ function AssignLayoutsModal({
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-              <span className="text-base">✦</span>
+              <span className="text-base">âœ¦</span>
               Assign Layouts with AI
             </h2>
             <p className="text-xs text-gray-400 mt-1">
@@ -316,7 +315,7 @@ function AssignLayoutsModal({
             onClick={onClose}
             className="shrink-0 w-6 h-6 flex items-center justify-center rounded-md text-gray-500 hover:text-white hover:bg-gray-800 transition-colors text-sm"
           >
-            ×
+            Ã—
           </button>
         </div>
 
@@ -369,7 +368,7 @@ function AssignLayoutsModal({
                         />
                       ))}
                     </div>
-                    Assigning…
+                    Assigningâ€¦
                   </>
                 ) : (
                   `Assign ${pageCount} Page${pageCount !== 1 ? "s" : ""}`
@@ -382,18 +381,14 @@ function AssignLayoutsModal({
           <div className="space-y-4">
             <div className="p-3 bg-green-900/20 border border-green-800/40 rounded-xl text-xs space-y-1">
               <p className="text-green-300 font-medium">
-                ✓ Layouts assigned to {result.pages_updated} page{result.pages_updated !== 1 ? "s" : ""}
+                âœ“ Layouts assigned to {result.pages_updated} page{result.pages_updated !== 1 ? "s" : ""}
               </p>
-              {result.byok ? (
-                <p className="text-gray-400">Using your own API key — no credits deducted</p>
-              ) : (
-                <p className="text-gray-400">
-                  Used <span className="text-white font-medium">{result.credits_used} credits</span>
-                  {result.credits_remaining !== null && (
-                    <> · <span className="text-white font-medium">{result.credits_remaining}</span> remaining</>
-                  )}
-                </p>
-              )}
+              <p className="text-gray-400">
+                Used <span className="text-white font-medium">{result.credits_used} credits</span>
+                {result.credits_remaining !== null && (
+                  <> Â· <span className="text-white font-medium">{result.credits_remaining}</span> remaining</>
+                )}
+              </p>
             </div>
             <button
               onClick={() => { onSuccess(); onClose(); }}
@@ -408,7 +403,7 @@ function AssignLayoutsModal({
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function WireframeEditor({
   projectId,
@@ -456,7 +451,7 @@ export default function WireframeEditor({
       .catch(() => { });
   }, [activeNodeId, projectId]);
 
-  // ── Pan ────────────────────────────────────────────────────────────────────
+  // â”€â”€ Pan â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest("[data-block]")) return;
     dragging.current = true;
@@ -487,7 +482,7 @@ export default function WireframeEditor({
     });
   }, []);
 
-  // ── Drop from library ──────────────────────────────────────────────────────
+  // â”€â”€ Drop from library â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const onDrop = useCallback(
     async (e: React.DragEvent) => {
       e.preventDefault();
@@ -533,7 +528,7 @@ export default function WireframeEditor({
     [apiBase, activeNodeId, blocks.length]
   );
 
-  // ── Scaffold current page ──────────────────────────────────────────────────
+  // â”€â”€ Scaffold current page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const scaffoldPage = useCallback(async () => {
     if (!apiBase || !activeNodeId || !activeNode) return;
     setScaffolding(true);
@@ -555,7 +550,7 @@ export default function WireframeEditor({
     setScaffolding(false);
   }, [apiBase, activeNodeId, activeNode]);
 
-  // ── Auto-assign all pages ────────────────────────────────────────────────────
+  // â”€â”€ Auto-assign all pages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const autoAssignAllPages = useCallback(async () => {
     setAutoAssigning(true);
     try {
@@ -573,7 +568,7 @@ export default function WireframeEditor({
     }
   }, [projectId, activeNodeId]);
 
-  // ── Reload current page blocks (after AI assign) ───────────────────────────
+  // â”€â”€ Reload current page blocks (after AI assign) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const reloadBlocks = useCallback(() => {
     if (!activeNodeId) return;
     fetch(`/api/projects/${projectId}/wireframes/${activeNodeId}`)
@@ -582,7 +577,7 @@ export default function WireframeEditor({
       .catch(() => { });
   }, [activeNodeId, projectId]);
 
-  // ── Block update ───────────────────────────────────────────────────────────
+  // â”€â”€ Block update â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const updateBlock = useCallback(
     async (blockId: string, updates: Partial<Block>) => {
       if (!activeNodeId) return;
@@ -601,7 +596,7 @@ export default function WireframeEditor({
     [projectId, activeNodeId]
   );
 
-  // ── Block delete ───────────────────────────────────────────────────────────
+  // â”€â”€ Block delete â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const deleteBlock = useCallback(
     async (blockId: string) => {
       if (!activeNodeId) return;
@@ -619,10 +614,10 @@ export default function WireframeEditor({
   return (
     <>
       <div className="flex h-[calc(100vh-10rem)] min-h-[600px] rounded-xl overflow-hidden border border-gray-800">
-        {/* ── Left sidebar: Block library ──────────────────────────────── */}
+        {/* â”€â”€ Left sidebar: Block library â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <BlockLibrary disabled={!activeNodeId} />
 
-        {/* ── Main canvas area ────────────────────────────────────────── */}
+        {/* â”€â”€ Main canvas area â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Toolbar */}
           <div className="flex items-center gap-3 px-4 py-2.5 bg-gray-900 border-b border-gray-800 shrink-0 flex-wrap">
@@ -637,7 +632,7 @@ export default function WireframeEditor({
                 }}
                 className="text-sm bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
               >
-                <option value="">— pick a page —</option>
+                <option value="">â€” pick a page â€”</option>
                 {nodes.map((n) => (
                   <option key={n.id} value={n.id}>
                     {n.label}
@@ -645,7 +640,7 @@ export default function WireframeEditor({
                 ))}
               </select>
             ) : (
-              <span className="text-xs text-gray-600">No pages — create some in the sitemap first</span>
+              <span className="text-xs text-gray-600">No pages â€” create some in the sitemap first</span>
             )}
 
             {/* Scaffold button (only when page selected + empty) */}
@@ -659,7 +654,7 @@ export default function WireframeEditor({
               </button>
             )}
             {scaffolding && (
-              <span className="text-xs text-gray-500">Scaffolding…</span>
+              <span className="text-xs text-gray-500">Scaffoldingâ€¦</span>
             )}
 
             <div className="ml-auto flex items-center gap-2">
@@ -671,7 +666,7 @@ export default function WireframeEditor({
                   className="text-xs px-2.5 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-600 rounded-lg text-gray-300 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                   title="Auto-generate blocks for all pages (3 credits)"
                 >
-                  {autoAssigning ? "Auto-assigning…" : "Auto-assign All (3 cr)"}
+                  {autoAssigning ? "Auto-assigningâ€¦" : "Auto-assign All (3 cr)"}
                 </button>
               )}
 
@@ -682,7 +677,7 @@ export default function WireframeEditor({
                   className="text-xs px-3 py-1.5 bg-brand-900/40 hover:bg-brand-800/60 border border-brand-700/50 hover:border-brand-600/70 rounded-lg text-brand-300 font-semibold transition-colors flex items-center gap-1.5"
                   title="Use AI to assign optimal layouts for all pages"
                 >
-                  <span className="text-[11px]">✦</span>
+                  <span className="text-[11px]">âœ¦</span>
                   Assign Layouts
                 </button>
               )}
@@ -696,7 +691,7 @@ export default function WireframeEditor({
                 id="wireframe-zoom-out"
                 onClick={() => setTransform((t) => ({ ...t, scale: Math.max(0.3, t.scale * 0.8) }))}
                 className="w-7 h-7 bg-gray-800 border border-gray-700 rounded-md text-gray-400 hover:bg-gray-700 hover:text-white transition-colors flex items-center justify-center text-base font-light"
-              >−</button>
+              >âˆ’</button>
             </div>
           </div>
 
@@ -722,7 +717,7 @@ export default function WireframeEditor({
 
             {!activeNodeId ? (
               <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
-                <div className="text-4xl mb-1">🗺</div>
+                <div className="text-4xl mb-1">ðŸ—º</div>
                 <p className="text-gray-400 text-sm font-medium">Select a page to start wireframing</p>
                 <p className="text-gray-600 text-xs">Then drag blocks from the left panel, or use Scaffold / Assign Layouts</p>
                 {pageNodes.length > 0 && (
@@ -730,7 +725,7 @@ export default function WireframeEditor({
                     onClick={() => setShowAssignModal(true)}
                     className="mt-2 text-xs px-4 py-2 bg-brand-900/40 hover:bg-brand-800/60 border border-brand-700/50 rounded-lg text-brand-300 font-semibold transition-colors flex items-center gap-2"
                   >
-                    <span className="text-sm">✦</span>
+                    <span className="text-sm">âœ¦</span>
                     Assign Layouts for All Pages
                   </button>
                 )}
@@ -767,7 +762,7 @@ export default function WireframeEditor({
                         disabled={scaffolding}
                         className="text-xs px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-400 hover:text-gray-300 transition-colors disabled:opacity-50"
                       >
-                        {scaffolding ? "Scaffolding…" : "Auto-scaffold from sitemap"}
+                        {scaffolding ? "Scaffoldingâ€¦" : "Auto-scaffold from sitemap"}
                       </button>
                     </div>
                   ) : (
@@ -800,7 +795,7 @@ export default function WireframeEditor({
           </div>
         </div>
 
-        {/* ── Right panel: Block props ─────────────────────────────────── */}
+        {/* â”€â”€ Right panel: Block props â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div
           className={`shrink-0 border-l border-gray-800 bg-gray-900 transition-all duration-200 overflow-auto ${selectedBlock ? "w-64" : "w-0 overflow-hidden"
             }`}
@@ -828,7 +823,7 @@ export default function WireframeEditor({
   );
 }
 
-// ─── Block props panel ────────────────────────────────────────────────────────
+// â”€â”€â”€ Block props panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function BlockPropsPanel({
   block,
@@ -979,3 +974,4 @@ function BlockPropsPanel({
     </div>
   );
 }
+

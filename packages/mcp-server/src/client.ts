@@ -204,8 +204,8 @@ export interface AiGenerateInput {
   prompt: string;
   project_id: string;
   target: "sitemap" | "wireframe";
-  model?: "claude-haiku-3-5" | "claude-sonnet-3-7" | "gpt-4o-mini" | "gemini-2-0-flash";
-  provider?: "anthropic" | "openai" | "google" | "groq";
+  model?: "deepseek-chat" | "claude-sonnet-4-5" | "gpt-5.5";
+  provider?: "anthropic" | "openai" | "google" | "groq" | "deepseek";
 }
 
 export interface AiGenerateResult {
@@ -213,5 +213,4 @@ export interface AiGenerateResult {
   operations_applied: number;
   credits_used: number;
   credits_remaining: number | null;
-  byok: boolean;
 }

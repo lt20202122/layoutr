@@ -1,6 +1,6 @@
-# Layoutr — Claude Code Context
+# Layoutr — Codex Context
 
-**Layoutr** is an AI-native sitemap and wireframe builder. It is built API/MCP-first, targeting AI coding agents (Claude Code, Codex, Cline, Kilo Code, opencode) as the primary power users.
+**Layoutr** is an AI-native sitemap and wireframe builder. It is built API/MCP-first, targeting AI coding agents (Codex, Codex, Cline, Kilo Code, opencode) as the primary power users.
 
 Live: https://layoutr-xi.vercel.app
 
@@ -17,7 +17,7 @@ layoutr/
 │   ├── cli/                  @layoutr/cli — npx layoutr init
 │   └── shared/               Shared types (future)
 ├── supabase/
-│   └── migrations/           001_initial_schema, 002_credits_design, 003_llm_api_keys_encrypted, 004_waitlist, 005_update_initial_credits, 006_generative_wireframes, 007_add_user_plan, 008_remove_byok
+│   └── migrations/           001_initial_schema, 002_credits_design, 003_llm_api_keys_encrypted, 004_waitlist, 005_update_initial_credits
 └── turbo.json                Turborepo config
 ```
 
@@ -38,7 +38,7 @@ layoutr/
 REST API and MCP server. AI agents call these directly to build/read/update project data without ever hitting an LLM through Layoutr.
 
 ### Layer 2 — Integrated AI (`/api/ai/generate`, `ai_generate` MCP tool)
-Users/agents can ask Layoutr's built-in AI to generate or modify sitemaps and wireframes from natural language. This costs credits.
+Users/agents can ask Layoutr's built-in AI to generate or modify sitemaps and wireframes from natural language. This costs credits (or uses BYOK keys).
 
 ---
 
@@ -74,12 +74,12 @@ Users/agents can ask Layoutr's built-in AI to generate or modify sitemaps and wi
 | Tier | Model | ID | Input cr/1M | Output cr/1M | Status |
 |------|-------|----|-------------|--------------|--------|
 | Starter | DeepSeek V4 Flash | `deepseek-chat` | 540 | 2,200 | Active |
-| Pro | Claude Sonnet 4.5 | `claude-sonnet-4-5` | 6,000 | 30,000 | Active |
+| Pro | Codex Sonnet 4.5 | `Codex-sonnet-4-5` | 6,000 | 30,000 | Active |
 | Max | GPT-5.5 | `gpt-5.5` | 30,000 | 150,000 | Locked |
 
 - 1 credit = $0.0001 (1/100th of a cent). 100 free credits = $0.01.
 - Rates are 2× markup over real API cost, tracked as input/output credit rates per 1M tokens.
-- AI calls always deduct credits and use Layoutr-managed provider keys from env vars.
+- BYOK users: zero credits deducted. Default provider keys (env vars) used when user has no BYOK key.
 - Min charge: 1 credit per call. Pre-flight check requires 5 / 50 / 300 credits depending on model.
 
 ---
@@ -113,6 +113,10 @@ GET    /api/projects/[projectId]/design-system  Get design tokens
 PATCH  /api/projects/[projectId]/design-system  Update design tokens
 
 POST   /api/ai/generate                       AI generate sitemap/wireframe (costs credits)
+GET    /api/ai/keys                           List BYOK LLM keys
+POST   /api/ai/keys                           Add/replace BYOK key
+DELETE /api/ai/keys/[keyId]                   Remove BYOK key
+
 GET    /api/keys                              List API keys
 POST   /api/keys                              Create API key
 DELETE /api/keys/[keyId]                      Revoke API key
@@ -163,7 +167,7 @@ Version: 0.2.0
 - `get_design_system` — Fetch design tokens
 - `update_design_system` — Update tokens
 
-### Setup (Claude Code)
+### Setup (Codex)
 
 ```json
 {
@@ -176,7 +180,7 @@ Version: 0.2.0
 }
 ```
 
-Add to `~/.claude.json` (global) or `.claude/settings.json` (project-scoped).
+Add to `~/.Codex.json` (global) or `.Codex/settings.json` (project-scoped).
 
 ---
 
@@ -188,7 +192,7 @@ Package: `@layoutr/cli` (not yet published to npm)
 npx layoutr init
 ```
 
-Detects which AI coding tools are installed and injects the MCP config block automatically. Supports: Claude Code, Codex, Cline, Kilo Code, opencode.
+Detects which AI coding tools are installed and injects the MCP config block automatically. Supports: Codex, Codex, Cline, Kilo Code, opencode.
 
 ---
 
@@ -200,6 +204,7 @@ Detects which AI coding tools are installed and injects the MCP config block aut
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key (server only, bypasses RLS) |
+| `LLM_ENCRYPTION_KEY` | Secret for AES-256-GCM BYOK key encryption |
 
 ### Dev mode
 | Var | Purpose |
@@ -207,7 +212,7 @@ Detects which AI coding tools are installed and injects the MCP config block aut
 | `NEXT_PUBLIC_DEV_BYPASS` | Set to `true` to skip auth |
 | `DEV_USER_ID` | UUID of dev user to impersonate |
 
-### Default LLM providers
+### Default LLM providers (needed for non-BYOK users)
 | Var | Purpose |
 |-----|---------|
 | `ANTHROPIC_API_KEY` | Default Anthropic key (`sk-ant-...`) |
@@ -215,7 +220,7 @@ Detects which AI coding tools are installed and injects the MCP config block aut
 | `GOOGLE_GENERATIVE_AI_API_KEY` | Default Google key (`AIza...`) |
 | `GROQ_API_KEY` | Default Groq key (`gsk_...`) |
 
-> **Note**: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `GROQ_API_KEY` are **not yet set on Vercel**. Without them, AI generation will return a 502 error when calling `/api/ai/generate`.
+> **Note**: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `GROQ_API_KEY` are **not yet set on Vercel**. Without them, non-BYOK users will get a 502 error when calling `/api/ai/generate`.
 
 ---
 
@@ -228,6 +233,7 @@ Detects which AI coding tools are installed and injects the MCP config block aut
 - Wireframe editor — pannable/zoomable canvas, 9 block types, props panel
 - Design system tokens per project
 - Credit system (100 free credits, per-model rates, live balance in header)
+- BYOK LLM key storage (AES-256-GCM encrypted)
 - `/api/ai/generate` — integrated AI for sitemap + wireframe generation
 - MCP server (18 tools) with StdioServerTransport
 - `npx layoutr init` CLI

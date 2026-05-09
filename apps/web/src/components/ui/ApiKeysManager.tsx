@@ -1,5 +1,6 @@
 "use client";
 
+import { Copy, KeyRound, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -35,7 +36,6 @@ export default function ApiKeysManager({ initialKeys }: Props) {
 
     const json = await res.json();
     setLoading(false);
-
     if (!res.ok) return;
 
     setNewKey(json.data.key);
@@ -59,86 +59,80 @@ export default function ApiKeysManager({ initialKeys }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* New key revealed */}
       {newKey && (
-        <div className="p-4 bg-green-900/20 border border-green-800/50 rounded-xl space-y-3">
-          <p className="text-sm font-medium text-green-300">New API key created — copy it now, it won&apos;t be shown again.</p>
-          <div className="flex items-center gap-2">
-            <code className="flex-1 text-xs font-mono bg-gray-900 px-3 py-2 rounded-lg break-all text-gray-200">
+        <div className="rounded-[28px] border border-emerald-300/20 bg-emerald-400/10 p-5">
+          <p className="text-sm font-medium text-emerald-100">
+            New key created. Copy it now, it will not be shown again.
+          </p>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <code className="flex-1 rounded-2xl border border-white/10 bg-black/15 px-4 py-3 font-mono text-xs text-slate-100">
               {newKey}
             </code>
-            <button
-              onClick={copyKey}
-              className="shrink-0 px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs font-medium transition-colors"
-            >
-              {copied ? "Copied!" : "Copy"}
+            <button onClick={copyKey} className="button-secondary gap-2">
+              <Copy className="h-4 w-4" />
+              {copied ? "Copied" : "Copy"}
             </button>
           </div>
-          <button
-            onClick={() => setNewKey(null)}
-            className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
-          >
-            I&apos;ve saved it, dismiss
-          </button>
         </div>
       )}
 
-      {/* Key list */}
       {keys.length > 0 && (
-        <div className="divide-y divide-gray-800 border border-gray-800 rounded-xl overflow-hidden">
+        <div className="space-y-3">
           {keys.map((key) => (
-            <div key={key.id} className="flex items-center justify-between px-4 py-3 bg-gray-900">
-              <div className="min-w-0">
-                <p className="font-medium text-sm truncate">{key.name}</p>
-                <p className="text-xs text-gray-500 font-mono mt-0.5">
-                  {key.key_prefix}••••••••••••
-                  {key.last_used_at && ` · Last used ${new Date(key.last_used_at).toLocaleDateString()}`}
-                </p>
+            <div key={key.id} className="rounded-[26px] border border-white/8 bg-white/[0.03] p-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <KeyRound className="h-4 w-4 text-brand-300" />
+                    <p className="text-sm font-medium text-white">{key.name}</p>
+                  </div>
+                  <p className="mt-2 font-mono text-xs text-slate-400">
+                    {key.key_prefix}****************
+                  </p>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Created {new Date(key.created_at).toLocaleDateString()}
+                    {key.last_used_at && ` • Last used ${new Date(key.last_used_at).toLocaleDateString()}`}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    if (confirm(`Revoke key "${key.name}"?`)) deleteKey(key.id);
+                  }}
+                  className="inline-flex items-center gap-2 rounded-full border border-red-300/20 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-100"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Revoke
+                </button>
               </div>
-              <button
-                onClick={() => { if (confirm(`Revoke key "${key.name}"?`)) deleteKey(key.id); }}
-                className="ml-4 text-xs text-red-400 hover:text-red-300 transition-colors shrink-0"
-              >
-                Revoke
-              </button>
             </div>
           ))}
         </div>
       )}
 
-      {/* Create form */}
       {creating ? (
-        <form onSubmit={createKey} className="flex gap-2">
-          <input
-            type="text"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            required
-            autoFocus
-            placeholder="Key name (e.g. MCP Server)"
-            className="flex-1 px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-          />
-          <button
-            type="submit"
-            disabled={loading || !newName.trim()}
-            className="px-4 py-2 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 rounded-lg text-sm font-semibold transition-colors"
-          >
-            {loading ? "Creating..." : "Create"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setCreating(false)}
-            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm font-semibold transition-colors"
-          >
-            Cancel
-          </button>
+        <form onSubmit={createKey} className="rounded-[28px] border border-white/8 bg-white/[0.03] p-4">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <input
+              type="text"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              required
+              autoFocus
+              placeholder="Key name"
+              className="field flex-1"
+            />
+            <button type="submit" disabled={loading || !newName.trim()} className="button-primary disabled:opacity-50">
+              {loading ? "Creating..." : "Create"}
+            </button>
+            <button type="button" onClick={() => setCreating(false)} className="button-secondary">
+              Cancel
+            </button>
+          </div>
         </form>
       ) : (
-        <button
-          onClick={() => setCreating(true)}
-          className="text-sm text-brand-400 hover:underline"
-        >
-          + Create new API key
+        <button onClick={() => setCreating(true)} className="button-secondary gap-2">
+          <Plus className="h-4 w-4" />
+          Create API key
         </button>
       )}
     </div>

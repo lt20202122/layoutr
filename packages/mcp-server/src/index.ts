@@ -277,19 +277,19 @@ server.tool(
 
 server.tool(
   "ai_generate",
-  "Use Layoutr's integrated AI to generate or update a sitemap or wireframe from a natural language prompt. Costs credits unless you have a BYOK key configured.",
+  "Use Layoutr's integrated AI to generate or update a sitemap or wireframe from a natural language prompt. Uses Layoutr-managed provider keys and costs credits.",
   {
     prompt: z.string().min(1).max(4000).describe("Natural language description of what to build"),
     project_id: z.string().uuid().describe("Project ID to modify"),
     target: z.enum(["sitemap", "wireframe"]).describe("What to generate"),
     model: z
-      .enum(["claude-haiku-3-5", "claude-sonnet-3-7", "gpt-4o-mini", "gemini-2-0-flash"])
+      .enum(["deepseek-chat", "claude-sonnet-4-5", "gpt-5.5"])
       .optional()
-      .describe("LLM model to use (default: claude-haiku-3-5)"),
+      .describe("LLM model to use (default: deepseek-chat)"),
     provider: z
-      .enum(["anthropic", "openai", "google", "groq"])
+      .enum(["anthropic", "openai", "google", "groq", "deepseek"])
       .optional()
-      .describe("LLM provider (default: anthropic)"),
+      .describe("LLM provider (default: deepseek)"),
   },
   async ({ prompt, project_id, target, model, provider }) => {
     const result = await client.aiGenerate({ prompt, project_id, target, model, provider });

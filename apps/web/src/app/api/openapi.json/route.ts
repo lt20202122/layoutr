@@ -415,7 +415,7 @@ const spec: Record<string, any> = {
     "/ai/generate": {
       post: {
         summary: "AI generate sitemap or wireframe",
-        description: "Costs credits unless using a BYOK key.",
+        description: "Uses Layoutr-managed provider keys and deducts credits based on usage.",
         security: [{ apiKey: [], sessionCookie: [] }],
         requestBody: {
           required: true,
@@ -465,51 +465,6 @@ const spec: Record<string, any> = {
           "200": { description: "Generation result" },
           "402": { description: "Insufficient credits" },
         },
-      },
-    },
-    "/ai/keys": {
-      get: {
-        summary: "List BYOK LLM keys",
-        security: [{ apiKey: [], sessionCookie: [] }],
-        responses: { "200": { description: "Array of LLM keys (prefixes)" } },
-      },
-      post: {
-        summary: "Add or replace a BYOK LLM key",
-        security: [{ apiKey: [], sessionCookie: [] }],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                required: ["provider", "key"],
-                properties: {
-                  provider: {
-                    type: "string",
-                    "enum": ["anthropic", "openai", "google", "groq"],
-                  },
-                  key: { type: "string" },
-                },
-              },
-            },
-          },
-        },
-        responses: { "200": { description: "Stored key metadata" } },
-      },
-    },
-    "/ai/keys/{keyId}": {
-      delete: {
-        summary: "Remove a BYOK LLM key",
-        security: [{ apiKey: [], sessionCookie: [] }],
-        parameters: [
-          {
-            name: "keyId",
-            in: "path",
-            required: true,
-            schema: { type: "string", format: "uuid" },
-          },
-        ],
-        responses: { "200": { description: "Deleted" } },
       },
     },
     "/keys": {

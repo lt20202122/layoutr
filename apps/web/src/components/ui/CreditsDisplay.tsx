@@ -1,35 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Zap } from "lucide-react";
 
 export default function CreditsDisplay({ initialCredits }: { initialCredits: number }) {
   const [credits, setCredits] = useState(initialCredits);
 
   useEffect(() => {
-    // Fetch credits immediately
-    fetch("/api/users/me/credits")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.credits !== undefined) setCredits(data.credits);
-      })
-      .catch(() => {});
-
-    // Poll every 5 seconds
-    const interval = setInterval(() => {
+    const refreshCredits = () => {
       fetch("/api/users/me/credits")
         .then((res) => res.json())
         .then((data) => {
           if (data.credits !== undefined) setCredits(data.credits);
         })
         .catch(() => {});
-    }, 5000);
+    };
 
+    refreshCredits();
+    const interval = setInterval(refreshCredits, 5000);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-900/20 border border-brand-800/40 rounded-full text-xs font-semibold text-brand-300">
-      ⚡ {credits} credits
+    <div className="inline-flex items-center gap-2 rounded-full border border-brand-300/20 bg-brand-400/10 px-4 py-2 text-sm font-medium text-brand-100">
+      <Zap className="h-3.5 w-3.5 text-brand-300" />
+      {credits} credits
     </div>
   );
 }

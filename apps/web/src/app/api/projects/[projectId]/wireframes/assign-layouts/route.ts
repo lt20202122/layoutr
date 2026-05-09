@@ -7,7 +7,6 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createDeepSeek } from "@ai-sdk/deepseek";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ok, err, authenticate } from "@/lib/api";
-import { decryptKey } from "@/lib/crypto";
 import { computeCredits, MIN_CREDITS, CREDIT_VALUE_USD, ModelId } from "@/lib/credits";
 import { PLAN_ALLOWED_MODELS, PlanId } from "@/lib/plans";
 import { GoogleGenAI } from "@google/genai";
@@ -17,20 +16,16 @@ const defaultOpenAI = createOpenAI();
 const defaultGoogle = createGoogleGenerativeAI();
 const defaultDeepSeek = createDeepSeek();
 
-// ─── Schema ───────────────────────────────────────────────────────────────────
-
 const Schema = z.object({
   model: z
     .enum(["deepseek-chat", "claude-sonnet-4-5", "gpt-5.5"])
     .default("deepseek-chat"),
-  provider: z
-    .enum(["anthropic", "openai", "google", "deepseek"])
-    .default("deepseek"),
+  provider: z.enum(["anthropic", "openai", "google", "deepseek"]).default("deepseek"),
 });
 
 const MODEL_ID_MAP: Record<string, string> = {
   "claude-sonnet-4-5": "claude-sonnet-4-5",
-  "gpt-5.5":           "gpt-5.5",
+  "gpt-5.5": "gpt-5.5",
 };
 
 function resolveModelId(model: string): string {
@@ -43,41 +38,35 @@ function minBalanceRequired(model: string): number {
   return 300;
 }
 
-// ─── Default props per block type ─────────────────────────────────────────────
-
 const BLOCK_DEFAULTS: Record<string, Record<string, unknown>> = {
-  Navbar:  { title: "My App", links: ["Home", "About", "Contact"] },
-  Hero:    { headline: "Welcome", subheadline: "Start building something great", cta: "Get Started" },
-  Cards:   { count: 3, title: "Features" },
-  CTA:     { headline: "Ready to start?", cta: "Sign Up Free" },
-  Form:    { fields: ["Name", "Email", "Message"], submitLabel: "Send" },
-  Footer:  { columns: 3, copyright: "© 2024" },
-  Text:    { content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
-  Image:   { alt: "Image placeholder", caption: "" },
-  Table:   { columns: ["Name", "Status", "Date"], rows: 5 },
+  Navbar: { title: "My App", links: ["Home", "About", "Contact"] },
+  Hero: { headline: "Welcome", subheadline: "Start building something great", cta: "Get Started" },
+  Cards: { count: 3, title: "Features" },
+  CTA: { headline: "Ready to start?", cta: "Sign Up Free" },
+  Form: { fields: ["Name", "Email", "Message"], submitLabel: "Send" },
+  Footer: { columns: 3, copyright: "© 2024" },
+  Text: { content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
+  Image: { alt: "Image placeholder", caption: "" },
+  Table: { columns: ["Name", "Status", "Date"], rows: 5 },
 };
-
-// ─── Provider factory ──────────────────────────────────────────────────────────
 
 type ProviderKey = "anthropic" | "openai" | "google" | "deepseek";
 
-function buildModel(provider: ProviderKey, model: string, byokKey?: string) {
+function buildModel(provider: ProviderKey, model: string) {
   const resolvedModel = resolveModelId(model);
   switch (provider) {
     case "anthropic":
-      return byokKey ? createAnthropic({ apiKey: byokKey })(resolvedModel) : defaultAnthropic(resolvedModel);
+      return defaultAnthropic(resolvedModel);
     case "openai":
-      return byokKey ? createOpenAI({ apiKey: byokKey })(resolvedModel) : defaultOpenAI(resolvedModel);
+      return defaultOpenAI(resolvedModel);
     case "google":
-      return byokKey ? createGoogleGenerativeAI({ apiKey: byokKey })(resolvedModel) : defaultGoogle(resolvedModel);
+      return defaultGoogle(resolvedModel);
     case "deepseek":
-      return byokKey ? createDeepSeek({ apiKey: byokKey })(resolvedModel) : defaultDeepSeek(resolvedModel);
+      return defaultDeepSeek(resolvedModel);
     default:
       throw new Error(`Unknown provider: ${provider}`);
   }
 }
-
-// ─── System prompt ────────────────────────────────────────────────────────────
 
 function buildSystemPrompt(
   nodes: Array<{ id: string; label: string; notes?: string | null; sections?: any[] }>
@@ -111,7 +100,7 @@ Rules:
 Sitemap pages to assign layouts for:
 ${JSON.stringify(nodes, null, 2)}
 
-Return a JSON array ONLY — no markdown, no explanation:
+Return a JSON array ONLY - no markdown, no explanation:
 [{"node_id":"...","blocks":[{"type":"Navbar","label":"Main Navigation","layout":"default","order_index":0},{"type":"Hero","label":"Welcome Banner","composition":[{"type":"WL","props":{"w":"70%"}},{"type":"WBtn","props":{"accent":true}}],"order_index":1}]}]
 
 Note on generative layouts:
@@ -119,8 +108,6 @@ Note on generative layouts:
 - Primitives available: {"type": "WL", "props": {"w": string, "opacity": number}}, {"type": "WBox", "props": {"w": string, "h": number}}, {"type": "WBtn", "props": {"w": number, "h": number, "accent": boolean}}, {"type": "WCircle", "props": {"size": number}}.
 - Use "composition" sparingly; prefer layout presets when they fit.`;
 }
-
-// ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(
   request: NextRequest,
@@ -137,7 +124,6 @@ export async function POST(
   const { model, provider } = parsed.data;
   const supabase = createServiceClient();
 
-  // Verify ownership
   const { data: project } = await supabase
     .from("projects")
     .select("id")
@@ -146,51 +132,32 @@ export async function POST(
     .single();
   if (!project) return err("Project not found", 404);
 
-  // BYOK check
-  let byokKey: string | undefined;
-  const { data: llmKey } = await supabase
-    .from("llm_api_keys")
-    .select("key_ciphertext, key_iv")
-    .eq("user_id", auth.userId)
-    .eq("provider", provider)
-    .single();
-  if (llmKey) {
-    try {
-      byokKey = decryptKey(llmKey.key_ciphertext, llmKey.key_iv);
-    } catch {
-      return err("Failed to decrypt BYOK key — check LLM_ENCRYPTION_KEY env var", 500);
-    }
-  }
-
-  // Credit check
   const minRequired = minBalanceRequired(model);
   let currentCredits = 0;
   let creditsRemaining = 0;
+  let actualCost = minRequired;
 
-  if (!byokKey) {
-    await supabase
-      .from("user_profiles")
-      .upsert({ id: auth.userId, credits: 100 }, { onConflict: "id", ignoreDuplicates: true });
+  await supabase
+    .from("user_profiles")
+    .upsert({ id: auth.userId, credits: 100 }, { onConflict: "id", ignoreDuplicates: true });
 
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("credits, plan")
-      .eq("id", auth.userId)
-      .single();
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("credits, plan")
+    .eq("id", auth.userId)
+    .single();
 
-    currentCredits = profile?.credits ?? 0;
-    const userPlan = (profile?.plan as PlanId) ?? "free";
+  currentCredits = profile?.credits ?? 0;
+  const userPlan = (profile?.plan as PlanId) ?? "free";
 
-    if (!PLAN_ALLOWED_MODELS[userPlan].includes(model as ModelId)) {
-      return err(`The ${model} model is not available on the ${userPlan} plan. Please upgrade to use it.`, 403);
-    }
-
-    if (currentCredits < minRequired) {
-      return err(`Insufficient credits. Need at least ${minRequired}, have ${currentCredits}.`, 402);
-    }
+  if (!PLAN_ALLOWED_MODELS[userPlan].includes(model as ModelId)) {
+    return err(`The ${model} model is not available on the ${userPlan} plan. Please upgrade to use it.`, 403);
   }
 
-  // Fetch page-type sitemap nodes
+  if (currentCredits < minRequired) {
+    return err(`Insufficient credits. Need at least ${minRequired}, have ${currentCredits}.`, 402);
+  }
+
   const { data: nodes } = await supabase
     .from("sitemap_nodes")
     .select("id, label, type, notes, metadata")
@@ -201,27 +168,25 @@ export async function POST(
   const pageNodes = nodes ?? [];
   if (pageNodes.length === 0) return err("No page nodes found in sitemap. Add pages first.", 400);
 
-  // Call LLM
   let llmResult: string;
   try {
     const systemPrompt = buildSystemPrompt(
-      pageNodes.map((n) => ({
-        id: n.id,
-        label: n.label,
-        notes: n.notes,
-        sections: (n.metadata as any)?.sections
+      pageNodes.map((node) => ({
+        id: node.id,
+        label: node.label,
+        notes: node.notes,
+        sections: (node.metadata as any)?.sections,
       }))
     );
     const prompt = `Assign optimal wireframe layouts for all ${pageNodes.length} pages listed above.`;
 
     if (provider === "google") {
-      const resolvedModel = resolveModelId(model);
       const ai = new GoogleGenAI({
-        apiKey: byokKey || process.env.GOOGLE_GENERATIVE_AI_API_KEY || "",
+        apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || "",
       });
 
       const response = await ai.models.generateContent({
-        model: resolvedModel,
+        model: resolveModelId(model),
         contents: prompt,
         config: {
           systemInstruction: systemPrompt,
@@ -229,38 +194,34 @@ export async function POST(
       });
 
       llmResult = response.text || "";
-      if (!byokKey) {
-        const usage = (response as any).usageMetadata;
-        const actualCost = computeCredits(
-          model,
-          usage?.promptTokenCount ?? 1000,
-          usage?.candidatesTokenCount ?? 1000
-        );
-        creditsRemaining = Math.max(0, currentCredits - actualCost);
-      }
+      const usage = (response as any).usageMetadata;
+      actualCost = computeCredits(
+        model,
+        usage?.promptTokenCount ?? 1000,
+        usage?.candidatesTokenCount ?? 1000
+      );
     } else {
-      const llmModel = buildModel(provider as ProviderKey, model, byokKey);
+      const llmModel = buildModel(provider as ProviderKey, model);
       const { text, usage } = await generateText({
         model: llmModel,
         system: systemPrompt,
         prompt,
       });
+
       llmResult = text;
-      if (!byokKey) {
-        const actualCost = computeCredits(
-          model,
-          (usage as any).promptTokens ?? 0,
-          (usage as any).completionTokens ?? 0
-        );
-        creditsRemaining = Math.max(0, currentCredits - actualCost);
-      }
+      actualCost = computeCredits(
+        model,
+        (usage as any).promptTokens ?? 0,
+        (usage as any).completionTokens ?? 0
+      );
     }
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "LLM call failed";
-    return err(`LLM error: ${msg}`, 502);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "LLM call failed";
+    return err(`LLM error: ${message}`, 502);
   }
 
-  // Parse LLM response
+  creditsRemaining = Math.max(0, currentCredits - actualCost);
+
   let assignments: Array<{
     node_id: string;
     blocks: Array<{
@@ -271,6 +232,7 @@ export async function POST(
       order_index: number;
     }>;
   }>;
+
   try {
     let cleaned = llmResult.trim();
     const firstBracket = Math.min(
@@ -289,8 +251,7 @@ export async function POST(
     return err("LLM returned invalid JSON. Please try again.", 502);
   }
 
-  // Apply: delete existing blocks, insert new ones for each assigned page
-  const validNodeIds = new Set(pageNodes.map((n) => n.id));
+  const validNodeIds = new Set(pageNodes.map((node) => node.id));
   let pagesUpdated = 0;
 
   for (const assignment of assignments) {
@@ -299,15 +260,15 @@ export async function POST(
 
     await supabase.from("wireframe_blocks").delete().eq("node_id", assignment.node_id);
 
-    const toInsert = assignment.blocks.map((b) => ({
+    const toInsert = assignment.blocks.map((block) => ({
       node_id: assignment.node_id,
-      type: b.type,
-      label: b.label ?? b.type,
-      composition: b.composition ?? null,
-      order_index: b.order_index ?? 0,
+      type: block.type,
+      label: block.label ?? block.type,
+      composition: block.composition ?? null,
+      order_index: block.order_index ?? 0,
       props: {
-        ...(BLOCK_DEFAULTS[b.type] ?? {}),
-        layout: b.layout ?? "default",
+        ...(BLOCK_DEFAULTS[block.type] ?? {}),
+        layout: block.layout ?? "default",
       },
     }));
 
@@ -315,19 +276,15 @@ export async function POST(
     pagesUpdated++;
   }
 
-  // Deduct credits
-  if (!byokKey) {
-    await supabase
-      .from("user_profiles")
-      .update({ credits: creditsRemaining })
-      .eq("id", auth.userId);
-  }
+  await supabase
+    .from("user_profiles")
+    .update({ credits: creditsRemaining })
+    .eq("id", auth.userId);
 
   return ok({
     pages_updated: pagesUpdated,
-    credits_used: byokKey ? 0 : currentCredits - creditsRemaining,
-    credits_cost_usd: byokKey ? 0 : (currentCredits - creditsRemaining) * CREDIT_VALUE_USD,
-    credits_remaining: byokKey ? null : creditsRemaining,
-    byok: !!byokKey,
+    credits_used: actualCost,
+    credits_cost_usd: actualCost * CREDIT_VALUE_USD,
+    credits_remaining: creditsRemaining,
   });
 }

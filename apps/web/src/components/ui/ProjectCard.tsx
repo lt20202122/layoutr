@@ -1,5 +1,6 @@
 "use client";
 
+import { Clock3, Ellipsis, FilePenLine, Trash2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -9,6 +10,15 @@ interface Project {
   name: string;
   description: string | null;
   updated_at: string;
+}
+
+function formatLastEdited(updatedAt: string) {
+  const date = new Date(updatedAt);
+  return `Last edited ${date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })}`;
 }
 
 export default function ProjectCard({ project }: { project: Project }) {
@@ -21,15 +31,12 @@ export default function ProjectCard({ project }: { project: Project }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [newName, setNewName] = useState(project.name);
   const [newDescription, setNewDescription] = useState(project.description ?? "");
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
@@ -38,18 +45,6 @@ export default function ProjectCard({ project }: { project: Project }) {
   function openMenu(x: number, y: number) {
     setMenuPos({ x, y });
     setMenuOpen(true);
-  }
-
-  function handleContextMenu(e: React.MouseEvent) {
-    e.preventDefault();
-    openMenu(e.clientX, e.clientY);
-  }
-
-  function handleThreeDots(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    openMenu(rect.right - 160, rect.bottom + 4);
   }
 
   async function handleRename(e: React.FormEvent) {
@@ -108,79 +103,89 @@ export default function ProjectCard({ project }: { project: Project }) {
     router.refresh();
   }
 
-  function closeMenu() {
-    setMenuOpen(false);
-    setMenuPos(null);
-  }
+  const modalBase =
+    "glass-panel-strong w-full max-w-xl rounded-[32px] p-6 sm:p-8";
 
   return (
     <>
-      <div
-        className="relative"
-        onContextMenu={handleContextMenu}
-      >
+      <div className="relative">
         <Link
           href={`/projects/${project.id}/sitemap`}
-          className="p-5 bg-gray-900 border border-gray-800 rounded-xl hover:border-gray-600 transition-colors group block"
+          className="glass-panel group block rounded-[28px] p-6 hover:-translate-y-0.5 hover:border-white/20"
         >
-          <div className="flex items-start justify-between">
-            <div className="min-w-0 mr-2">
-              <h2 className="font-semibold truncate group-hover:text-brand-400 transition-colors">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="section-label">Project</p>
+              <h2 className="mt-3 truncate text-xl font-semibold text-white group-hover:text-brand-100">
                 {project.name}
               </h2>
-              {project.description && (
-                <p className="text-gray-400 text-sm mt-1 line-clamp-2">{project.description}</p>
-              )}
+              <p className="body-sm mt-3 min-h-12 line-clamp-2">
+                {project.description || "No description yet. Open the project to define the structure and layout flow."}
+              </p>
             </div>
+
             <button
-              onClick={handleThreeDots}
-              className="shrink-0 mt-0.5 p-1 rounded-md hover:bg-gray-800 text-gray-500 hover:text-gray-300 transition-colors -mr-1"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                openMenu(rect.right - 170, rect.bottom + 8);
+              }}
+              className="rounded-full border border-white/10 bg-white/[0.03] p-2 text-slate-500 hover:text-white"
               aria-label="Project options"
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="3" r="1.5" fill="currentColor" />
-                <circle cx="8" cy="8" r="1.5" fill="currentColor" />
-                <circle cx="8" cy="13" r="1.5" fill="currentColor" />
-              </svg>
+              <Ellipsis className="h-4 w-4" />
             </button>
           </div>
-          <p className="text-xs text-gray-500 mt-4">
-            Updated {new Date(project.updated_at).toLocaleDateString()}
-          </p>
+
+          <div className="mt-6 flex items-center justify-between rounded-2xl border border-white/8 bg-black/10 px-4 py-3 text-sm text-slate-400">
+            <div className="flex items-center gap-2">
+              <Clock3 className="h-4 w-4 text-brand-300" />
+              {formatLastEdited(project.updated_at)}
+            </div>
+            <span className="text-white">Open</span>
+          </div>
         </Link>
 
         {menuOpen && menuPos && (
           <div
             ref={menuRef}
-            className="fixed z-50 w-44 bg-gray-900 border border-gray-700 rounded-xl shadow-xl py-1"
+            className="glass-panel fixed z-50 w-48 rounded-[24px] p-2"
             style={{ left: menuPos.x, top: menuPos.y }}
           >
             <button
-              onClick={(e) => { e.stopPropagation(); closeMenu(); setNewName(project.name); setError(null); setRenameOpen(true); }}
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 transition-colors text-left"
+              onClick={() => {
+                setMenuOpen(false);
+                setNewName(project.name);
+                setError(null);
+                setRenameOpen(true);
+              }}
+              className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-slate-300 hover:bg-white/[0.04] hover:text-white"
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
-                <path d="M10.5 1.5l2 2L5 11H3V9l7.5-7.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <FilePenLine className="h-4 w-4" />
               Rename
             </button>
             <button
-              onClick={(e) => { e.stopPropagation(); closeMenu(); setNewDescription(project.description ?? ""); setError(null); setDescOpen(true); }}
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 transition-colors text-left"
+              onClick={() => {
+                setMenuOpen(false);
+                setNewDescription(project.description ?? "");
+                setError(null);
+                setDescOpen(true);
+              }}
+              className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-slate-300 hover:bg-white/[0.04] hover:text-white"
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
-                <path d="M4 10l6-6M3 11l.5-2L9.5 3l1.5 1.5-6 6-2 .5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Change description
+              <FilePenLine className="h-4 w-4" />
+              Edit description
             </button>
-            <div className="border-t border-gray-800 my-1" />
             <button
-              onClick={(e) => { e.stopPropagation(); closeMenu(); setError(null); setDeleteOpen(true); }}
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-gray-800 transition-colors text-left"
+              onClick={() => {
+                setMenuOpen(false);
+                setError(null);
+                setDeleteOpen(true);
+              }}
+              className="mt-1 flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-red-300 hover:bg-red-500/10"
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
-                <path d="M2 3.5h10M5 3.5V2a1 1 0 011-1h2a1 1 0 011 1v1.5M11 3.5v8a1 1 0 01-1 1H4a1 1 0 01-1-1v-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <Trash2 className="h-4 w-4" />
               Delete
             </button>
           </div>
@@ -188,34 +193,17 @@ export default function ProjectCard({ project }: { project: Project }) {
       </div>
 
       {renameOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-gray-900 border border-gray-700 rounded-2xl p-6 space-y-5">
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold text-lg">Rename project</h2>
-              <button onClick={() => setRenameOpen(false)} className="text-gray-400 hover:text-white transition-colors">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
-            <form onSubmit={handleRename} className="space-y-4">
-              {error && (
-                <div className="p-3 bg-red-900/40 border border-red-800 rounded-lg text-red-300 text-sm">{error}</div>
-              )}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">Name</label>
-                <input
-                  type="text"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  required
-                  autoFocus
-                  className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-                />
-              </div>
-              <div className="flex gap-3 pt-1">
-                <button type="button" onClick={() => setRenameOpen(false)} className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm font-semibold transition-colors">Cancel</button>
-                <button type="submit" disabled={loading || !newName.trim()} className="flex-1 py-2.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-semibold transition-colors">{loading ? "Saving..." : "Save"}</button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4 backdrop-blur-md">
+          <div className={modalBase}>
+            <h2 className="text-2xl font-semibold text-white">Rename project</h2>
+            <form onSubmit={handleRename} className="mt-6 space-y-4">
+              {error && <div className="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</div>}
+              <input className="field" value={newName} onChange={(e) => setNewName(e.target.value)} autoFocus required />
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button type="button" onClick={() => setRenameOpen(false)} className="button-secondary">Cancel</button>
+                <button type="submit" disabled={loading || !newName.trim()} className="button-primary disabled:cursor-not-allowed disabled:opacity-50">
+                  {loading ? "Saving..." : "Save"}
+                </button>
               </div>
             </form>
           </div>
@@ -223,33 +211,23 @@ export default function ProjectCard({ project }: { project: Project }) {
       )}
 
       {descOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-gray-900 border border-gray-700 rounded-2xl p-6 space-y-5">
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold text-lg">Change description</h2>
-              <button onClick={() => setDescOpen(false)} className="text-gray-400 hover:text-white transition-colors">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
-            <form onSubmit={handleDescription} className="space-y-4">
-              {error && (
-                <div className="p-3 bg-red-900/40 border border-red-800 rounded-lg text-red-300 text-sm">{error}</div>
-              )}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">Description</label>
-                <textarea
-                  value={newDescription}
-                  onChange={(e) => setNewDescription(e.target.value)}
-                  rows={3}
-                  autoFocus
-                  className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
-                />
-              </div>
-              <div className="flex gap-3 pt-1">
-                <button type="button" onClick={() => setDescOpen(false)} className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm font-semibold transition-colors">Cancel</button>
-                <button type="submit" disabled={loading} className="flex-1 py-2.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-semibold transition-colors">{loading ? "Saving..." : "Save"}</button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4 backdrop-blur-md">
+          <div className={modalBase}>
+            <h2 className="text-2xl font-semibold text-white">Edit description</h2>
+            <form onSubmit={handleDescription} className="mt-6 space-y-4">
+              {error && <div className="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</div>}
+              <textarea
+                className="field resize-none"
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                rows={5}
+                autoFocus
+              />
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button type="button" onClick={() => setDescOpen(false)} className="button-secondary">Cancel</button>
+                <button type="submit" disabled={loading} className="button-primary disabled:cursor-not-allowed disabled:opacity-50">
+                  {loading ? "Saving..." : "Save"}
+                </button>
               </div>
             </form>
           </div>
@@ -257,27 +235,22 @@ export default function ProjectCard({ project }: { project: Project }) {
       )}
 
       {deleteOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-gray-900 border border-gray-700 rounded-2xl p-6 space-y-5">
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold text-lg text-red-400">Delete project</h2>
-              <button onClick={() => setDeleteOpen(false)} className="text-gray-400 hover:text-white transition-colors">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4 backdrop-blur-md">
+          <div className={modalBase}>
+            <h2 className="text-2xl font-semibold text-red-100">Delete project</h2>
+            <p className="body-lg mt-4">
+              Delete <span className="font-semibold text-white">{project.name}</span> and all associated sitemap and wireframe data.
+            </p>
+            {error && <div className="mt-4 rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</div>}
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button onClick={() => setDeleteOpen(false)} className="button-secondary">Cancel</button>
+              <button
+                onClick={handleDelete}
+                disabled={loading}
+                className="inline-flex items-center justify-center rounded-full bg-red-500 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {loading ? "Deleting..." : "Delete project"}
               </button>
-            </div>
-            <div className="space-y-4">
-              <p className="text-sm text-gray-400">
-                Are you sure you want to delete <strong className="text-white">{project.name}</strong>? This action cannot be undone. All sitemaps and wireframes will be permanently removed.
-              </p>
-              {error && (
-                <div className="p-3 bg-red-900/40 border border-red-800 rounded-lg text-red-300 text-sm">{error}</div>
-              )}
-              <div className="flex gap-3 pt-1">
-                <button onClick={() => setDeleteOpen(false)} className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm font-semibold transition-colors">Cancel</button>
-                <button onClick={handleDelete} disabled={loading} className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-semibold transition-colors">{loading ? "Deleting..." : "Delete"}</button>
-              </div>
             </div>
           </div>
         </div>

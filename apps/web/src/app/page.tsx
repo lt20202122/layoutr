@@ -1,75 +1,195 @@
 import Link from "next/link";
+import { Bot, Boxes, LayoutTemplate, Sparkles } from "lucide-react";
+import AppLogo from "@/components/ui/AppLogo";
 
 const DEV_MODE = process.env.NEXT_PUBLIC_DEV_BYPASS === "true";
 
+const featureCards = [
+  {
+    icon: Boxes,
+    title: "Model-readable project structure",
+    body: "Shape sitemaps as living product maps with hierarchy, status, sections, and structure that agents can actually use.",
+  },
+  {
+    icon: LayoutTemplate,
+    title: "Wireframes that stay connected",
+    body: "Move from sitemap to wireframe without leaving the workspace. Layout blocks, scaffold pages, and refine the system in one place.",
+  },
+  {
+    icon: Bot,
+    title: "API and MCP native",
+    body: "Give AI coding agents direct access through REST or MCP so they can build, inspect, and modify product structure programmatically.",
+  },
+];
+
 export default function LandingPage() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6 py-24">
+    <main className="relative overflow-hidden pb-20 pt-6 sm:pb-24 sm:pt-8">
       {DEV_MODE && (
-        <div className="fixed top-0 left-0 right-0 bg-amber-500/15 border-b border-amber-500/30 text-amber-300 text-xs px-4 py-2 flex items-center gap-4 z-50">
-          <span className="font-bold uppercase tracking-wider text-amber-400">⚠ Dev Mode</span>
-          <span className="text-amber-500/70">Auth disabled</span>
-          <span className="text-amber-500/40">|</span>
-          <Link href="/dashboard" className="hover:text-amber-100 transition-colors font-medium underline underline-offset-2">→ Go to Dashboard</Link>
-          <Link href="/settings" className="hover:text-amber-100 transition-colors font-medium">Settings</Link>
+        <div className="app-shell mb-6">
+          <div className="glass-panel rounded-full px-4 py-2 text-xs text-amber-200">
+            Dev bypass is enabled.{" "}
+            <Link href="/dashboard" className="font-semibold text-amber-50 underline underline-offset-4">
+              Open the dashboard
+            </Link>
+            {" "}or{" "}
+            <Link href="/settings" className="font-semibold text-amber-50 underline underline-offset-4">
+              jump to settings
+            </Link>
+            .
+          </div>
         </div>
       )}
-      <div className="max-w-3xl w-full text-center space-y-8">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <rect x="2" y="2" width="7" height="5" rx="1.5" fill="white" />
-              <rect x="11" y="2" width="7" height="5" rx="1.5" fill="white" opacity="0.6" />
-              <rect x="2" y="9" width="16" height="3" rx="1.5" fill="white" opacity="0.4" />
-              <rect x="2" y="14" width="10" height="4" rx="1.5" fill="white" opacity="0.7" />
-            </svg>
-          </div>
-          <span className="text-2xl font-bold tracking-tight">Layoutr</span>
-        </div>
 
-        {/* Headline */}
-        <div className="space-y-4">
-          <h1 className="text-5xl font-bold tracking-tight leading-tight">
-            Sitemaps & wireframes,{" "}
-            <span className="text-brand-400">API-first</span>
-          </h1>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Build, manage, and export sitemaps visually or programmatically.
-            Native MCP support lets AI agents design alongside you.
-          </p>
-        </div>
-
-        {/* CTA */}
-        <div className="flex items-center justify-center gap-4 flex-wrap">
-          <Link
-            href={DEV_MODE ? "/dashboard" : "/auth/signup"}
-            className="px-6 py-3 bg-brand-600 hover:bg-brand-500 rounded-lg font-semibold transition-colors"
-          >
-            {DEV_MODE ? "Open Dashboard" : "Get started free"}
-          </Link>
-          <Link
-            href={DEV_MODE ? "/settings" : "/auth/login"}
-            className="px-6 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg font-semibold transition-colors"
-          >
-            {DEV_MODE ? "Settings" : "Sign in"}
-          </Link>
-        </div>
-
-        {/* Features */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-8">
-          {[
-            { title: "Sitemap Builder", desc: "Tree-based editor with drag & drop" },
-            { title: "REST + MCP API", desc: "Full programmatic access for AI agents" },
-            { title: "API Keys", desc: "Secure access tokens for integrations" },
-          ].map((f) => (
-            <div key={f.title} className="p-4 bg-gray-900 rounded-xl border border-gray-800 text-left">
-              <p className="font-semibold text-sm">{f.title}</p>
-              <p className="text-gray-400 text-sm mt-1">{f.desc}</p>
+      <section className="app-shell">
+        <div className="glass-panel-strong relative overflow-hidden rounded-[36px] px-6 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-300/50 to-transparent" />
+          <header className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <AppLogo />
+            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
+              <Link href="/docs" className="button-secondary">Read docs</Link>
+              <Link href={DEV_MODE ? "/dashboard" : "/auth/login"} className="button-secondary">
+                {DEV_MODE ? "Workspace" : "Sign in"}
+              </Link>
             </div>
-          ))}
+          </header>
+
+          <div className="mt-14 grid gap-12 lg:grid-cols-[minmax(0,1.05fr)_460px] lg:items-center">
+            <div className="max-w-3xl">
+              <p className="section-label">AI-native product architecture</p>
+              <h1 className="headline-xl mt-5 max-w-4xl text-white">
+                Let your agent handle it.
+              </h1>
+              <p className="body-lg mt-6 max-w-2xl">
+                Layoutr gives humans and agents one shared workspace for page structure, layout planning, API access, and MCP-driven editing.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Link href={DEV_MODE ? "/dashboard" : "/auth/signup"} className="button-primary">
+                  {DEV_MODE ? "Open dashboard" : "Start free"}
+                </Link>
+                <Link href="/docs" className="button-secondary">
+                  Explore API setup
+                </Link>
+              </div>
+              <div className="mt-10 flex flex-wrap gap-3 text-xs text-slate-400">
+                <span className="status-pill">Visual sitemap editor</span>
+                <span className="status-pill">Integrated wireframe canvas</span>
+                <span className="status-pill">REST + MCP access</span>
+              </div>
+            </div>
+
+            <div className="glass-panel rounded-[30px] p-4">
+              <div className="rounded-[24px] border border-white/10 bg-ink-950 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Workspace</p>
+                    <p className="mt-1 text-sm font-medium text-white">Launch plan</p>
+                  </div>
+                  <div className="status-pill">
+                    <Sparkles className="h-3.5 w-3.5 text-brand-300" />
+                    AI connected
+                  </div>
+                </div>
+
+                <div className="grid gap-3">
+                  <div className="rounded-[22px] border border-brand-300/15 bg-brand-400/10 p-4">
+                    <div className="flex items-center justify-between text-xs text-brand-100/80">
+                      <span>Sitemap</span>
+                      <span>12 pages</span>
+                    </div>
+                    <div className="mt-4 grid grid-cols-3 gap-2">
+                      <div className="rounded-2xl bg-slate-900/80 p-3">
+                        <div className="h-2 w-16 rounded-full bg-brand-300/70" />
+                        <div className="mt-2 h-1.5 w-10 rounded-full bg-white/20" />
+                        <div className="mt-5 h-14 rounded-xl border border-white/8 bg-white/[0.04]" />
+                      </div>
+                      <div className="rounded-2xl bg-slate-900/70 p-3">
+                        <div className="h-2 w-14 rounded-full bg-white/70" />
+                        <div className="mt-2 h-1.5 w-8 rounded-full bg-white/20" />
+                        <div className="mt-5 h-14 rounded-xl border border-white/8 bg-white/[0.04]" />
+                      </div>
+                      <div className="rounded-2xl bg-slate-900/70 p-3">
+                        <div className="h-2 w-12 rounded-full bg-white/70" />
+                        <div className="mt-2 h-1.5 w-9 rounded-full bg-white/20" />
+                        <div className="mt-5 h-14 rounded-xl border border-white/8 bg-white/[0.04]" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-[1.1fr_0.9fr]">
+                    <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
+                      <div className="flex items-center justify-between text-xs text-slate-400">
+                        <span>Wireframe</span>
+                        <span>Hero + cards + CTA</span>
+                      </div>
+                      <div className="mt-4 rounded-[20px] border border-white/10 bg-[#0a1423] p-3">
+                        <div className="h-6 rounded-full bg-white/[0.04]" />
+                        <div className="mt-3 h-24 rounded-[18px] bg-brand-400/10" />
+                        <div className="mt-3 grid grid-cols-3 gap-2">
+                          <div className="h-16 rounded-2xl bg-white/[0.04]" />
+                          <div className="h-16 rounded-2xl bg-white/[0.04]" />
+                          <div className="h-16 rounded-2xl bg-white/[0.04]" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
+                      <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Agent prompt</p>
+                      <p className="mt-4 text-sm leading-6 text-slate-300">
+                        Generate a launch site with docs, pricing, onboarding, and app settings. Keep the layout minimal and developer-first.
+                      </p>
+                      <div className="mt-6 rounded-2xl border border-brand-300/20 bg-brand-300/10 px-3 py-2 text-xs font-medium text-brand-100">
+                        MCP tools ready
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
+      <section className="app-shell mt-10 grid gap-6 lg:grid-cols-3">
+        {featureCards.map((feature) => {
+          const Icon = feature.icon;
+          return (
+            <article key={feature.title} className="glass-panel rounded-[28px] p-6">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-brand-300/20 bg-brand-400/10">
+                <Icon className="h-5 w-5 text-brand-200" />
+              </div>
+              <h2 className="mt-6 text-xl font-semibold text-white">{feature.title}</h2>
+              <p className="body-sm mt-3">{feature.body}</p>
+            </article>
+          );
+        })}
+      </section>
+
+      <section className="app-shell mt-10">
+        <div className="glass-panel rounded-[34px] px-6 py-8 sm:px-8 sm:py-10">
+          <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
+            <div>
+              <p className="section-label">Built for agent workflows</p>
+              <h2 className="headline-lg mt-5 max-w-xl text-white">
+                A cleaner handoff between planning, structure, and implementation.
+              </h2>
+            </div>
+            <div className="grid gap-4 text-sm text-slate-300 sm:grid-cols-3">
+              <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
+                <p className="text-2xl font-semibold text-white">18</p>
+                <p className="mt-2 leading-6 text-slate-400">MCP tools for project, sitemap, wireframe, design system, and AI generation flows.</p>
+              </div>
+              <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
+                <p className="text-2xl font-semibold text-white">2</p>
+                <p className="mt-2 leading-6 text-slate-400">Modes of work: direct CRUD for structure and integrated AI for credit-based generation.</p>
+              </div>
+              <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
+                <p className="text-2xl font-semibold text-white">1</p>
+                <p className="mt-2 leading-6 text-slate-400">Shared workspace across humans, API clients, and AI coding agents.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
