@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { ArrowLeft, Chrome } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppLogo from "@/components/ui/AppLogo";
 import { createClient } from "@/lib/supabase/client";
+import { getAuthCallbackUrl, getAuthErrorMessageFromUrl } from "@/lib/supabase/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,13 +15,20 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const nextError = getAuthErrorMessageFromUrl(window.location.search, window.location.hash);
+    if (nextError) {
+      setError(nextError);
+    }
+  }, []);
+
   async function handleGoogle() {
     setError(null);
     setLoading(true);
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: getAuthCallbackUrl(window.location.origin) },
     });
     if (error) {
       setError(error.message);
@@ -71,6 +79,13 @@ export default function LoginPage() {
           <div className="mt-6 lg:mt-0">
             <p className="section-label">Sign in</p>
             <h2 className="mt-4 text-3xl font-semibold text-white">Access your Layoutr workspace</h2>
+            <p className="mt-3 text-sm text-slate-400">
+              Want to explore first?{" "}
+              <Link href="/dashboard" className="font-medium text-brand-200 hover:text-white">
+                Continue without an account
+              </Link>
+              . Guest work stays in local storage with no AI, credits, API, or MCP access.
+            </p>
           </div>
 
           {error && (

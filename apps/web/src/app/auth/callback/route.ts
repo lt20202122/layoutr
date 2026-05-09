@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getAuthCallbackUrl } from "@/lib/supabase/auth";
 import { getSupabasePublicEnv, hasSupabasePublicEnv } from "@/lib/supabase/env";
 
 export async function GET(request: NextRequest) {
@@ -14,9 +15,16 @@ export async function GET(request: NextRequest) {
   if (code) {
     const response = NextResponse.redirect(`${origin}${next}`);
     const { url, anonKey } = getSupabasePublicEnv();
+    const callbackUrl = new URL(getAuthCallbackUrl(origin));
 
     // Write auth cookies onto the redirect response itself.
     const supabase = createServerClient(url, anonKey, {
+      global: {
+        headers: {
+          "x-forwarded-host": callbackUrl.host,
+          "x-forwarded-proto": callbackUrl.protocol.replace(":", ""),
+        },
+      },
       cookies: {
         getAll() {
           return request.cookies.getAll();

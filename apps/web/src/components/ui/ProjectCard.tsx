@@ -4,6 +4,7 @@ import { Clock3, Ellipsis, FilePenLine, Trash2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { deleteGuestProject, updateGuestProject } from "@/lib/guest-storage";
 
 interface Project {
   id: string;
@@ -21,7 +22,15 @@ function formatLastEdited(updatedAt: string) {
   })}`;
 }
 
-export default function ProjectCard({ project }: { project: Project }) {
+export default function ProjectCard({
+  project,
+  mode = "account",
+  onChanged,
+}: {
+  project: Project;
+  mode?: "account" | "guest";
+  onChanged?: () => void;
+}) {
   const router = useRouter();
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -52,6 +61,16 @@ export default function ProjectCard({ project }: { project: Project }) {
     if (!newName.trim()) return;
     setLoading(true);
     setError(null);
+
+    if (mode === "guest") {
+      updateGuestProject(project.id, { name: newName.trim() });
+      setLoading(false);
+      setRenameOpen(false);
+      setMenuOpen(false);
+      onChanged?.();
+      return;
+    }
+
     const res = await fetch(`/api/projects/${project.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -65,6 +84,7 @@ export default function ProjectCard({ project }: { project: Project }) {
     }
     setRenameOpen(false);
     setMenuOpen(false);
+    onChanged?.();
     router.refresh();
   }
 
@@ -72,6 +92,16 @@ export default function ProjectCard({ project }: { project: Project }) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    if (mode === "guest") {
+      updateGuestProject(project.id, { description: newDescription.trim() || null });
+      setLoading(false);
+      setDescOpen(false);
+      setMenuOpen(false);
+      onChanged?.();
+      return;
+    }
+
     const res = await fetch(`/api/projects/${project.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -85,12 +115,23 @@ export default function ProjectCard({ project }: { project: Project }) {
     }
     setDescOpen(false);
     setMenuOpen(false);
+    onChanged?.();
     router.refresh();
   }
 
   async function handleDelete() {
     setLoading(true);
     setError(null);
+
+    if (mode === "guest") {
+      deleteGuestProject(project.id);
+      setLoading(false);
+      setDeleteOpen(false);
+      setMenuOpen(false);
+      onChanged?.();
+      return;
+    }
+
     const res = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
     const json = await res.json();
     setLoading(false);
@@ -100,6 +141,7 @@ export default function ProjectCard({ project }: { project: Project }) {
     }
     setDeleteOpen(false);
     setMenuOpen(false);
+    onChanged?.();
     router.refresh();
   }
 
@@ -122,6 +164,9 @@ export default function ProjectCard({ project }: { project: Project }) {
               <p className="body-sm mt-3 min-h-12 line-clamp-2">
                 {project.description || "No description yet. Open the project to define the structure and layout flow."}
               </p>
+              {mode === "guest" && (
+                <p className="mt-3 text-xs uppercase tracking-[0.22em] text-slate-500">Stored locally on this device</p>
+              )}
             </div>
 
             <button

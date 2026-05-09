@@ -3,8 +3,17 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { createGuestProject } from "@/lib/guest-storage";
 
-export default function CreateProjectButton() {
+type Mode = "account" | "guest";
+
+export default function CreateProjectButton({
+  mode = "account",
+  onCreated,
+}: {
+  mode?: Mode;
+  onCreated?: () => void;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -16,6 +25,17 @@ export default function CreateProjectButton() {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    if (mode === "guest") {
+      const project = createGuestProject({ name, description });
+      setOpen(false);
+      setName("");
+      setDescription("");
+      setLoading(false);
+      onCreated?.();
+      router.push(`/projects/${project.id}/sitemap`);
+      return;
+    }
 
     const res = await fetch("/api/projects", {
       method: "POST",
@@ -34,6 +54,7 @@ export default function CreateProjectButton() {
     setOpen(false);
     setName("");
     setDescription("");
+    onCreated?.();
     router.refresh();
     router.push(`/projects/${json.data.id}/sitemap`);
   }
@@ -51,7 +72,14 @@ export default function CreateProjectButton() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="section-label">Create workspace</p>
-                <h2 className="mt-3 text-2xl font-semibold text-white">Start a new Layoutr project</h2>
+                <h2 className="mt-3 text-2xl font-semibold text-white">
+                  {mode === "guest" ? "Start a local guest project" : "Start a new Layoutr project"}
+                </h2>
+                {mode === "guest" && (
+                  <p className="mt-3 text-sm text-slate-400">
+                    This project will stay on this device in local storage until you create an account.
+                  </p>
+                )}
               </div>
               <button
                 onClick={() => setOpen(false)}

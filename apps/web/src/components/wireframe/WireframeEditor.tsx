@@ -1,11 +1,18 @@
 ﻿"use client";
 
+import Link from "next/link";
 import { useState, useRef, useCallback, useEffect } from "react";
 import BlockLibrary from "./BlockLibrary";
 import WireframeBlock, { BLOCK_LAYOUT_VARIANTS, DEFAULT_LAYOUTS } from "./WireframeBlock";
 import { estimateCredits, ModelId } from "@/lib/credits";
 import { PLAN_ALLOWED_MODELS } from "@/lib/plans";
 import { mapSectionToBlock, Section } from "../sitemap/sitemapUtils";
+import {
+  createGuestWireframeBlock,
+  deleteGuestWireframeBlock,
+  listGuestWireframeBlocks,
+  updateGuestWireframeBlock,
+} from "@/lib/guest-storage";
 
 // â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -42,6 +49,7 @@ interface Props {
   selectedNodeId: string | null;
   initialBlocks: Block[];
   userPlan: string;
+  guestMode?: boolean;
 }
 
 // â”€â”€â”€ Default block props â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -387,6 +395,7 @@ export default function WireframeEditor({
   selectedNodeId,
   initialBlocks,
   userPlan,
+  guestMode = false,
 }: Props) {
   const [activeNodeId, setActiveNodeId] = useState<string | null>(selectedNodeId);
   const [blocks, setBlocks] = useState<Block[]>(initialBlocks);
@@ -421,11 +430,15 @@ export default function WireframeEditor({
   // Reload blocks when node changes
   useEffect(() => {
     if (!activeNodeId) { setBlocks([]); return; }
+    if (guestMode) {
+      setBlocks(listGuestWireframeBlocks(activeNodeId) as Block[]);
+      return;
+    }
     fetch(`/api/projects/${projectId}/wireframes/${activeNodeId}`)
       .then((r) => r.json())
       .then((j) => setBlocks((j.data ?? []) as Block[]))
       .catch(() => { });
-  }, [activeNodeId, projectId]);
+  }, [guestMode, activeNodeId, projectId]);
 
   // â”€â”€ Pan â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const onMouseDown = useCallback((e: React.MouseEvent) => {
@@ -483,6 +496,17 @@ export default function WireframeEditor({
       setBlocks((prev) => [...prev, optimisticBlock]);
       setSelectedBlockId(tempId);
 
+      if (guestMode) {
+        const data = createGuestWireframeBlock(projectId, activeNodeId, {
+          type: blockType,
+          order_index: blocks.length,
+          props: { ...(BLOCK_DEFAULTS[blockType] ?? {}), layout },
+        });
+        setBlocks((prev) => prev.map((b) => (b.id === tempId ? data : b)));
+        setSelectedBlockId(data.id);
+        return;
+      }
+
       const res = await fetch(apiBase, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -501,7 +525,7 @@ export default function WireframeEditor({
       setBlocks((prev) => prev.map((b) => (b.id === tempId ? (data as Block) : b)));
       setSelectedBlockId((data as Block).id);
     },
-    [apiBase, activeNodeId, blocks.length]
+    [guestMode, apiBase, activeNodeId, blocks.length, projectId]
   );
 
   // â”€â”€ Scaffold current page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -509,6 +533,20 @@ export default function WireframeEditor({
     if (!apiBase || !activeNodeId || !activeNode) return;
     setScaffolding(true);
     const defaultBlocks = getDefaultBlocksForPage(activeNode.label, activeNode.metadata?.sections);
+
+    if (guestMode) {
+      const nextBlocks = defaultBlocks.map((block, index) =>
+        createGuestWireframeBlock(projectId, activeNodeId, {
+          type: block.type,
+          order_index: index,
+          props: { ...BLOCK_DEFAULTS[block.type as BlockType], layout: block.layout },
+        })
+      );
+      setBlocks(nextBlocks);
+      setScaffolding(false);
+      return;
+    }
+
     for (const [i, b] of defaultBlocks.entries()) {
       await fetch(apiBase, {
         method: "POST",
@@ -524,10 +562,11 @@ export default function WireframeEditor({
     const json = await res.json();
     setBlocks((json.data ?? []) as Block[]);
     setScaffolding(false);
-  }, [apiBase, activeNodeId, activeNode]);
+  }, [guestMode, apiBase, activeNodeId, activeNode, projectId]);
 
   // â”€â”€ Auto-assign all pages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const autoAssignAllPages = useCallback(async () => {
+    if (guestMode) return;
     setAutoAssigning(true);
     try {
       await fetch(`/api/projects/${projectId}/wireframes/auto-assign`, {
@@ -542,21 +581,31 @@ export default function WireframeEditor({
     } finally {
       setAutoAssigning(false);
     }
-  }, [projectId, activeNodeId]);
+  }, [guestMode, projectId, activeNodeId]);
 
   // â”€â”€ Reload current page blocks (after AI assign) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const reloadBlocks = useCallback(() => {
     if (!activeNodeId) return;
+    if (guestMode) {
+      setBlocks(listGuestWireframeBlocks(activeNodeId) as Block[]);
+      return;
+    }
     fetch(`/api/projects/${projectId}/wireframes/${activeNodeId}`)
       .then((r) => r.json())
       .then((j) => setBlocks((j.data ?? []) as Block[]))
       .catch(() => { });
-  }, [activeNodeId, projectId]);
+  }, [guestMode, activeNodeId, projectId]);
 
   // â”€â”€ Block update â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const updateBlock = useCallback(
     async (blockId: string, updates: Partial<Block>) => {
       if (!activeNodeId) return;
+      if (guestMode) {
+        const data = updateGuestWireframeBlock(projectId, activeNodeId, blockId, updates);
+        if (!data) return;
+        setBlocks((prev) => prev.map((b) => (b.id === blockId ? data : b)));
+        return;
+      }
       const res = await fetch(
         `/api/projects/${projectId}/wireframes/${activeNodeId}/${blockId}`,
         {
@@ -569,20 +618,24 @@ export default function WireframeEditor({
       const { data } = await res.json();
       setBlocks((prev) => prev.map((b) => (b.id === blockId ? (data as Block) : b)));
     },
-    [projectId, activeNodeId]
+    [guestMode, projectId, activeNodeId]
   );
 
   // â”€â”€ Block delete â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const deleteBlock = useCallback(
     async (blockId: string) => {
       if (!activeNodeId) return;
-      await fetch(`/api/projects/${projectId}/wireframes/${activeNodeId}/${blockId}`, {
-        method: "DELETE",
-      });
+      if (guestMode) {
+        deleteGuestWireframeBlock(projectId, activeNodeId, blockId);
+      } else {
+        await fetch(`/api/projects/${projectId}/wireframes/${activeNodeId}/${blockId}`, {
+          method: "DELETE",
+        });
+      }
       setBlocks((prev) => prev.filter((b) => b.id !== blockId));
       if (selectedBlockId === blockId) setSelectedBlockId(null);
     },
-    [projectId, activeNodeId, selectedBlockId]
+    [guestMode, projectId, activeNodeId, selectedBlockId]
   );
 
   const selectedBlock = blocks.find((b) => b.id === selectedBlockId) ?? null;
@@ -631,21 +684,22 @@ export default function WireframeEditor({
               {pageNodes.length > 0 && (
                 <button
                   onClick={autoAssignAllPages}
-                  disabled={autoAssigning}
+                  disabled={autoAssigning || guestMode}
                   className="button-secondary rounded-full px-4 py-2 text-xs disabled:opacity-50"
-                  title="Auto-generate blocks for all pages (3 credits)"
+                  title={guestMode ? "Requires an account for credit-based generation" : "Auto-generate blocks for all pages (3 credits)"}
                 >
-                  {autoAssigning ? "Auto-assigning..." : "Auto-assign All"}
+                  {guestMode ? "Auto-assign locked" : autoAssigning ? "Auto-assigning..." : "Auto-assign All"}
                 </button>
               )}
 
               {pageNodes.length > 0 && (
                 <button
-                  onClick={() => setShowAssignModal(true)}
-                  className="button-primary rounded-full px-4 py-2 text-xs"
-                  title="Use AI to assign optimal layouts for all pages"
+                  onClick={() => !guestMode && setShowAssignModal(true)}
+                  disabled={guestMode}
+                  className="button-primary rounded-full px-4 py-2 text-xs disabled:opacity-50"
+                  title={guestMode ? "Requires an account for AI layout assignment" : "Use AI to assign optimal layouts for all pages"}
                 >
-                  Assign Layouts
+                  {guestMode ? "AI layouts locked" : "Assign Layouts"}
                 </button>
               )}
 
@@ -690,12 +744,22 @@ export default function WireframeEditor({
                 <p className="text-white text-lg font-medium">Select a page to start wireframing</p>
                 <p className="text-slate-500 text-sm">Drag blocks from the left panel, scaffold a layout, or assign layouts across all pages.</p>
                 {pageNodes.length > 0 && (
-                  <button
-                    onClick={() => setShowAssignModal(true)}
-                    className="button-primary mt-2 rounded-full"
-                  >
-                    Assign Layouts for All Pages
-                  </button>
+                  guestMode ? (
+                    <div className="mt-2 rounded-[24px] border border-white/8 bg-white/[0.03] p-4 text-sm text-slate-300">
+                      Guest mode supports manual wireframing and local scaffolding.{" "}
+                      <Link href="/auth/signup" className="text-brand-200 hover:text-white">
+                        Create an account
+                      </Link>{" "}
+                      to unlock AI layouts, credits, API access, and MCP tools.
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowAssignModal(true)}
+                      className="button-primary mt-2 rounded-full"
+                    >
+                      Assign Layouts for All Pages
+                    </button>
+                  )
                 )}
               </div>
             ) : (
@@ -773,7 +837,7 @@ export default function WireframeEditor({
       </div>
 
       {/* Assign Layouts modal */}
-      {showAssignModal && (
+      {showAssignModal && !guestMode && (
         <AssignLayoutsModal
           projectId={projectId}
           pageCount={pageNodes.length}

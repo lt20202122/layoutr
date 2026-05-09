@@ -48,6 +48,7 @@ export default function LandingPage() {
             <AppLogo />
             <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
               <Link href="/docs" className="button-secondary">Read docs</Link>
+              <Link href="/dashboard" className="button-secondary">Continue as guest</Link>
               <Link href={DEV_MODE ? "/dashboard" : "/auth/login"} className="button-secondary">
                 {DEV_MODE ? "Workspace" : "Sign in"}
               </Link>
@@ -65,7 +66,10 @@ export default function LandingPage() {
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Link href={DEV_MODE ? "/dashboard" : "/auth/signup"} className="button-primary">
-                  {DEV_MODE ? "Open dashboard" : "Start free"}
+                  {DEV_MODE ? "Open dashboard" : "Create account"}
+                </Link>
+                <Link href="/dashboard" className="button-secondary">
+                  Continue without account
                 </Link>
                 <Link href="/docs" className="button-secondary">
                   Explore API setup

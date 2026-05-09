@@ -1,19 +1,26 @@
 "use client";
 
+import Link from "next/link";
 import { Bot, Sparkles, WandSparkles } from "lucide-react";
 import { useState, useCallback } from "react";
 import { SitemapNode, buildTree, flattenTree, DEFAULT_SECTIONS } from "./sitemapUtils";
 import SitemapCanvas from "./SitemapCanvas";
 import NodeDetailPanel from "./NodeDetailPanel";
 import AiPanel from "./AiPanel";
+import {
+  createGuestSitemapNode,
+  deleteGuestSitemapNode,
+  updateGuestSitemapNode,
+} from "@/lib/guest-storage";
 
 type Props = {
   projectId: string;
   initialNodes: SitemapNode[];
   userPlan: string;
+  guestMode?: boolean;
 };
 
-export default function SitemapEditor({ projectId, initialNodes, userPlan }: Props) {
+export default function SitemapEditor({ projectId, initialNodes, userPlan, guestMode = false }: Props) {
   const [nodes, setNodes] = useState<SitemapNode[]>(initialNodes);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saving, setSaving] = useState<Record<string, boolean>>({});
@@ -28,6 +35,20 @@ export default function SitemapEditor({ projectId, initialNodes, userPlan }: Pro
   const addNode = useCallback(
     async (parentId: string | null = null) => {
       const siblings = nodes.filter((n) => n.parent_id === parentId);
+
+      if (guestMode) {
+        const data = createGuestSitemapNode(projectId, {
+          label: "New page",
+          type: "page",
+          parent_id: parentId,
+          order_index: siblings.length,
+          metadata: { sections: DEFAULT_SECTIONS },
+        });
+        setNodes((prev) => [...prev, data]);
+        setSelectedId(data.id);
+        return;
+      }
+
       const res = await fetch(apiBase, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -44,11 +65,18 @@ export default function SitemapEditor({ projectId, initialNodes, userPlan }: Pro
       setNodes((prev) => [...prev, data]);
       setSelectedId(data.id);
     },
-    [nodes, apiBase]
+    [guestMode, nodes, apiBase, projectId]
   );
 
   const updateNode = useCallback(
     async (id: string, updates: Partial<SitemapNode>) => {
+      if (guestMode) {
+        const data = updateGuestSitemapNode(projectId, id, updates);
+        if (!data) return;
+        setNodes((prev) => prev.map((node) => (node.id === id ? data : node)));
+        return;
+      }
+
       setSaving((state) => ({ ...state, [id]: true }));
       const res = await fetch(`${apiBase}/${id}`, {
         method: "PATCH",
@@ -60,7 +88,7 @@ export default function SitemapEditor({ projectId, initialNodes, userPlan }: Pro
       const { data } = await res.json();
       setNodes((prev) => prev.map((node) => (node.id === id ? data : node)));
     },
-    [apiBase]
+    [guestMode, apiBase, projectId]
   );
 
   const deleteNode = useCallback(
@@ -72,11 +100,17 @@ export default function SitemapEditor({ projectId, initialNodes, userPlan }: Pro
         all.filter((n) => n.parent_id === nodeId).forEach((n) => collect(n.id));
       };
       collect(id);
-      await fetch(`${apiBase}/${id}`, { method: "DELETE" });
+
+      if (guestMode) {
+        deleteGuestSitemapNode(projectId, id);
+      } else {
+        await fetch(`${apiBase}/${id}`, { method: "DELETE" });
+      }
+
       setNodes((prev) => prev.filter((n) => !toDelete.has(n.id)));
       if (selectedId && toDelete.has(selectedId)) setSelectedId(null);
     },
-    [nodes, apiBase, selectedId]
+    [guestMode, nodes, apiBase, projectId, selectedId]
   );
 
   const autoAssignWireframes = useCallback(async () => {
@@ -133,12 +167,16 @@ export default function SitemapEditor({ projectId, initialNodes, userPlan }: Pro
 
               <button
                 onClick={autoAssignWireframes}
-                disabled={autoAssigning}
+                disabled={autoAssigning || guestMode}
                 className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-200 hover:bg-white/[0.08] disabled:opacity-50"
-                title="Auto-generate wireframes for all pages (3 credits)"
+                title={
+                  guestMode
+                    ? "Requires an account for credit-based wireframe generation"
+                    : "Auto-generate wireframes for all pages (3 credits)"
+                }
               >
                 <WandSparkles className="h-4 w-4 text-brand-300" />
-                {autoAssigning ? "Assigning..." : "Auto-assign wireframes"}
+                {guestMode ? "Auto-assign locked" : autoAssigning ? "Assigning..." : "Auto-assign wireframes"}
               </button>
 
               <button id="sitemap-add-page" onClick={() => addNode(null)} className="button-primary gap-2">
@@ -198,12 +236,35 @@ export default function SitemapEditor({ projectId, initialNodes, userPlan }: Pro
           }`}
         >
           {aiPanelOpen && (
-            <AiPanel
-              projectId={projectId}
-              onNodesUpdated={(updated) => setNodes(updated as SitemapNode[])}
-              onGenerating={setGenerating}
-              userPlan={userPlan}
-            />
+            guestMode ? (
+              <div className="flex h-full flex-col">
+                <div className="border-b border-white/8 px-5 py-4">
+                  <p className="section-label">AI generation</p>
+                  <h2 className="mt-2 text-lg font-semibold text-white">Available with an account</h2>
+                </div>
+                <div className="flex-1 p-5">
+                  <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4 text-sm text-slate-300">
+                    Guest mode keeps your sitemap in local storage with zero credits. Create an account to unlock integrated AI,
+                    API keys, and MCP access.
+                    <div className="mt-4 flex gap-3">
+                      <Link href="/auth/signup" className="button-primary">
+                        Create account
+                      </Link>
+                      <Link href="/auth/login" className="button-secondary">
+                        Sign in
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <AiPanel
+                projectId={projectId}
+                onNodesUpdated={(updated) => setNodes(updated as SitemapNode[])}
+                onGenerating={setGenerating}
+                userPlan={userPlan}
+              />
+            )
           )}
         </div>
       </div>

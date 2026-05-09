@@ -53,9 +53,11 @@ export default async function DashboardLayout({
               </div>
 
               <div className="mt-8 rounded-[26px] border border-white/8 bg-white/[0.03] p-4">
-                <p className="section-label">Workspace</p>
+                <p className="section-label">{user ? "Workspace" : "Guest mode"}</p>
                 <p className="mt-3 text-sm leading-6 text-slate-300">
-                  Structure pages, generate wireframes, and keep the planning layer visible while you ship.
+                  {user
+                    ? "Structure pages, generate wireframes, and keep the planning layer visible while you ship."
+                    : "Build sitemaps and wireframes locally. AI generation, credits, API keys, and MCP access require an account."}
                 </p>
               </div>
 
@@ -96,9 +98,17 @@ export default async function DashboardLayout({
                       <SignOutButton />
                     </>
                   ) : (
-                    <Link href="/auth/login" className="button-secondary">
-                      Sign in
-                    </Link>
+                    <>
+                      <div className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/[0.03] px-4 py-2 text-sm font-medium text-slate-300">
+                        0 credits
+                      </div>
+                      <Link href="/auth/signup" className="button-primary">
+                        Create account
+                      </Link>
+                      <Link href="/auth/login" className="button-secondary">
+                        Sign in
+                      </Link>
+                    </>
                   )}
                 </div>
               </header>
