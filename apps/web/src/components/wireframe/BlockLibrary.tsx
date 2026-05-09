@@ -1,10 +1,11 @@
 "use client";
 
+import type { ComponentType } from "react";
 import { AlignLeft, AppWindow, FormInput, GalleryHorizontal, LayoutGrid, PanelTop, RectangleEllipsis, Table2 } from "lucide-react";
 import { type BlockType } from "./WireframeEditor";
 import { BLOCK_LAYOUT_VARIANTS } from "./WireframeBlock";
 
-const BLOCKS: { type: BlockType; icon: React.ComponentType<{ className?: string }>; description: string }[] = [
+const BLOCKS: { type: BlockType; icon: ComponentType<{ className?: string }>; description: string }[] = [
   { type: "Navbar", icon: PanelTop, description: "Navigation bar" },
   { type: "Hero", icon: AppWindow, description: "Primary hero section" },
   { type: "Cards", icon: LayoutGrid, description: "Feature cards grid" },

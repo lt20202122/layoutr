@@ -12,8 +12,9 @@ export default async function DashboardPage() {
 
   if (user) projectsQuery.eq("user_id", user.id);
 
-  const { data: projects } = await projectsQuery;
-  const projectCount = projects?.length ?? 0;
+  const { data } = await projectsQuery;
+  const projects = data ?? [];
+  const projectCount = projects.length;
 
   return (
     <div className="space-y-8">
@@ -53,7 +54,7 @@ export default async function DashboardPage() {
             <p className="section-label">{projectCount} active project{projectCount === 1 ? "" : "s"}</p>
           </div>
           <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-            {projects.map((project) => (
+            {(projects ?? []).map((project) => (
               <ProjectCard key={project.id} project={project} />
             ))}
           </div>

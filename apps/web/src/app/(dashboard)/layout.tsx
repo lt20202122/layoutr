@@ -8,6 +8,8 @@ import SignOutButton from "@/components/ui/SignOutButton";
 const DEV_MODE =
   process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_DEV_BYPASS === "true";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
   children,
 }: {

@@ -294,68 +294,48 @@ function AssignLayoutsModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
 
-      {/* Modal */}
-      <div className="relative w-full max-w-sm bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl p-5 space-y-4">
-        {/* Header */}
+      <div className="glass-panel-strong relative w-full max-w-md rounded-[30px] p-6 space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-              <span className="text-base">âœ¦</span>
+              <span className="text-base">*</span>
               Assign Layouts with AI
             </h2>
-            <p className="text-xs text-gray-400 mt-1">
-              AI will analyze your sitemap and assign the optimal block layout for each page
-              ({pageCount} page{pageCount !== 1 ? "s" : ""}).
+            <p className="text-xs text-slate-400 mt-1">
+              AI will analyze your sitemap and assign the optimal block layout for each page ({pageCount} page{pageCount !== 1 ? "s" : ""}).
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="shrink-0 w-6 h-6 flex items-center justify-center rounded-md text-gray-500 hover:text-white hover:bg-gray-800 transition-colors text-sm"
-          >
-            Ã—
+          <button onClick={onClose} className="shrink-0 rounded-full border border-white/10 p-2 text-slate-400 hover:text-white">
+            x
           </button>
         </div>
 
         {!result ? (
           <>
-            {/* Model picker */}
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1.5">
-                AI Model
-              </label>
+              <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1.5">AI Model</label>
               <TierDropdown value={tierId} onChange={setTierId} disabled={loading} userPlan={userPlan} />
             </div>
 
-            {/* Info box */}
-            <div className="p-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-xs text-gray-400 space-y-1">
+            <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4 text-xs text-slate-400 space-y-1">
               <p>Existing wireframe blocks for all pages will be replaced.</p>
-              <p className="text-gray-500">
-                Cost: {estimateCredits(tier.id).label} credits
-              </p>
+              <p className="text-slate-500">Cost: {estimateCredits(tier.id).label} credits</p>
             </div>
 
-            {/* Error */}
             {error && (
-              <div className="p-3 bg-red-900/20 border border-red-800/40 rounded-xl text-xs text-red-300">
-                {error}
-              </div>
+              <div className="rounded-[22px] border border-red-300/20 bg-red-500/10 p-4 text-xs text-red-100">{error}</div>
             )}
 
-            {/* Actions */}
             <div className="flex gap-2">
-              <button
-                onClick={onClose}
-                className="flex-1 text-xs py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg font-medium text-gray-300 transition-colors"
-              >
+              <button onClick={onClose} className="button-secondary flex-1 justify-center rounded-full text-xs">
                 Cancel
               </button>
               <button
                 onClick={handleAssign}
                 disabled={loading}
-                className="flex-1 text-xs py-2 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors flex items-center justify-center gap-1.5"
+                className="button-primary flex-1 justify-center rounded-full text-xs disabled:opacity-50"
               >
                 {loading ? (
                   <>
@@ -368,7 +348,7 @@ function AssignLayoutsModal({
                         />
                       ))}
                     </div>
-                    Assigningâ€¦
+                    Assigning...
                   </>
                 ) : (
                   `Assign ${pageCount} Page${pageCount !== 1 ? "s" : ""}`
@@ -377,23 +357,19 @@ function AssignLayoutsModal({
             </div>
           </>
         ) : (
-          /* Success state */
           <div className="space-y-4">
-            <div className="p-3 bg-green-900/20 border border-green-800/40 rounded-xl text-xs space-y-1">
-              <p className="text-green-300 font-medium">
-                âœ“ Layouts assigned to {result.pages_updated} page{result.pages_updated !== 1 ? "s" : ""}
+            <div className="rounded-[22px] border border-emerald-300/20 bg-emerald-400/10 p-4 text-xs space-y-1">
+              <p className="text-emerald-100 font-medium">
+                Layouts assigned to {result.pages_updated} page{result.pages_updated !== 1 ? "s" : ""}
               </p>
-              <p className="text-gray-400">
+              <p className="text-slate-300">
                 Used <span className="text-white font-medium">{result.credits_used} credits</span>
                 {result.credits_remaining !== null && (
-                  <> Â· <span className="text-white font-medium">{result.credits_remaining}</span> remaining</>
+                  <> - <span className="text-white font-medium">{result.credits_remaining}</span> remaining</>
                 )}
               </p>
             </div>
-            <button
-              onClick={() => { onSuccess(); onClose(); }}
-              className="w-full text-xs py-2 bg-brand-600 hover:bg-brand-500 rounded-lg font-semibold transition-colors"
-            >
+            <button onClick={() => { onSuccess(); onClose(); }} className="button-primary w-full justify-center rounded-full text-xs">
               Done
             </button>
           </div>
@@ -613,15 +589,12 @@ export default function WireframeEditor({
 
   return (
     <>
-      <div className="flex h-[calc(100vh-10rem)] min-h-[600px] rounded-xl overflow-hidden border border-gray-800">
-        {/* â”€â”€ Left sidebar: Block library â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      <div className="glass-panel-strong flex min-h-[720px] overflow-hidden rounded-[32px]">
         <BlockLibrary disabled={!activeNodeId} />
 
-        {/* â”€â”€ Main canvas area â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Toolbar */}
-          <div className="flex items-center gap-3 px-4 py-2.5 bg-gray-900 border-b border-gray-800 shrink-0 flex-wrap">
-            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Page</span>
+          <div className="flex items-center gap-3 px-5 py-4 border-b border-white/8 shrink-0 flex-wrap">
+            <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Page</span>
             {nodes.length > 0 ? (
               <select
                 id="wireframe-node-picker"
@@ -630,9 +603,9 @@ export default function WireframeEditor({
                   setActiveNodeId(e.target.value || null);
                   setSelectedBlockId(null);
                 }}
-                className="text-sm bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="field w-auto min-w-[220px] py-2.5"
               >
-                <option value="">â€” pick a page â€”</option>
+                <option value="">Pick a page</option>
                 {nodes.map((n) => (
                   <option key={n.id} value={n.id}>
                     {n.label}
@@ -640,44 +613,38 @@ export default function WireframeEditor({
                 ))}
               </select>
             ) : (
-              <span className="text-xs text-gray-600">No pages â€” create some in the sitemap first</span>
+              <span className="text-xs text-slate-600">No pages yet. Create them in the sitemap first.</span>
             )}
 
-            {/* Scaffold button (only when page selected + empty) */}
             {activeNodeId && blocks.length === 0 && !scaffolding && (
               <button
                 onClick={scaffoldPage}
-                className="text-xs px-2.5 py-1 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-600 rounded-lg text-gray-300 font-medium transition-colors"
+                className="button-secondary rounded-full px-4 py-2 text-xs"
                 title="Auto-generate blocks from sitemap page type"
               >
                 Scaffold
               </button>
             )}
-            {scaffolding && (
-              <span className="text-xs text-gray-500">Scaffoldingâ€¦</span>
-            )}
+            {scaffolding && <span className="text-xs text-slate-500">Scaffolding...</span>}
 
             <div className="ml-auto flex items-center gap-2">
-              {/* Auto-assign all pages (rule-based) */}
               {pageNodes.length > 0 && (
                 <button
                   onClick={autoAssignAllPages}
                   disabled={autoAssigning}
-                  className="text-xs px-2.5 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-600 rounded-lg text-gray-300 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                  className="button-secondary rounded-full px-4 py-2 text-xs disabled:opacity-50"
                   title="Auto-generate blocks for all pages (3 credits)"
                 >
-                  {autoAssigning ? "Auto-assigningâ€¦" : "Auto-assign All (3 cr)"}
+                  {autoAssigning ? "Auto-assigning..." : "Auto-assign All"}
                 </button>
               )}
 
-              {/* Assign Layouts AI button */}
               {pageNodes.length > 0 && (
                 <button
                   onClick={() => setShowAssignModal(true)}
-                  className="text-xs px-3 py-1.5 bg-brand-900/40 hover:bg-brand-800/60 border border-brand-700/50 hover:border-brand-600/70 rounded-lg text-brand-300 font-semibold transition-colors flex items-center gap-1.5"
+                  className="button-primary rounded-full px-4 py-2 text-xs"
                   title="Use AI to assign optimal layouts for all pages"
                 >
-                  <span className="text-[11px]">âœ¦</span>
                   Assign Layouts
                 </button>
               )}
@@ -685,22 +652,25 @@ export default function WireframeEditor({
               <button
                 id="wireframe-zoom-in"
                 onClick={() => setTransform((t) => ({ ...t, scale: Math.min(3, t.scale * 1.2) }))}
-                className="w-7 h-7 bg-gray-800 border border-gray-700 rounded-md text-gray-400 hover:bg-gray-700 hover:text-white transition-colors flex items-center justify-center text-base font-light"
+                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-slate-950/70 text-slate-300"
               >+</button>
               <button
                 id="wireframe-zoom-out"
                 onClick={() => setTransform((t) => ({ ...t, scale: Math.max(0.3, t.scale * 0.8) }))}
-                className="w-7 h-7 bg-gray-800 border border-gray-700 rounded-md text-gray-400 hover:bg-gray-700 hover:text-white transition-colors flex items-center justify-center text-base font-light"
-              >âˆ’</button>
+                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-slate-950/70 text-slate-300"
+              >-</button>
             </div>
           </div>
 
-          {/* Canvas */}
           <div
             ref={canvasRef}
             id="wireframe-canvas"
             className="flex-1 relative overflow-hidden select-none"
-            style={{ background: "#0f172a", cursor: dragging.current ? "grabbing" : "grab" }}
+            style={{
+              background:
+                "linear-gradient(180deg,#07111f,#091423)",
+              cursor: dragging.current ? "grabbing" : "grab",
+            }}
             onMouseDown={onMouseDown}
             onMouseMove={onMouseMove}
             onMouseUp={onMouseUp}
@@ -710,22 +680,20 @@ export default function WireframeEditor({
             onDragLeave={() => setDraggingOver(false)}
             onDrop={onDrop}
           >
-            {/* Drop indicator */}
             {draggingOver && (
-              <div className="absolute inset-0 border-2 border-brand-500/50 rounded pointer-events-none z-10 bg-brand-500/5" />
+              <div className="absolute inset-0 border-2 border-brand-300/40 pointer-events-none z-10 bg-brand-300/10" />
             )}
 
             {!activeNodeId ? (
               <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
-                <div className="text-4xl mb-1">ðŸ—º</div>
-                <p className="text-gray-400 text-sm font-medium">Select a page to start wireframing</p>
-                <p className="text-gray-600 text-xs">Then drag blocks from the left panel, or use Scaffold / Assign Layouts</p>
+                <div className="text-sm uppercase tracking-[0.24em] text-slate-500">Wireframe canvas</div>
+                <p className="text-white text-lg font-medium">Select a page to start wireframing</p>
+                <p className="text-slate-500 text-sm">Drag blocks from the left panel, scaffold a layout, or assign layouts across all pages.</p>
                 {pageNodes.length > 0 && (
                   <button
                     onClick={() => setShowAssignModal(true)}
-                    className="mt-2 text-xs px-4 py-2 bg-brand-900/40 hover:bg-brand-800/60 border border-brand-700/50 rounded-lg text-brand-300 font-semibold transition-colors flex items-center gap-2"
+                    className="button-primary mt-2 rounded-full"
                   >
-                    <span className="text-sm">âœ¦</span>
                     Assign Layouts for All Pages
                   </button>
                 )}
@@ -738,31 +706,28 @@ export default function WireframeEditor({
                   transform: `translate(${transform.x}px,${transform.y}px) scale(${transform.scale})`,
                 }}
               >
-                {/* Page frame */}
                 <div
-                  className="relative bg-gray-800/40 border border-gray-700/60 rounded-xl overflow-hidden"
+                  className="relative overflow-hidden rounded-[26px] border border-white/10 bg-slate-950/80 shadow-[0_24px_80px_rgba(0,0,0,0.4)]"
                   style={{ width: 400 }}
                 >
-                  {/* Browser chrome */}
-                  <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-900/80 border-b border-gray-700/60">
-                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
-                    <div className="flex-1 mx-2 h-4 bg-gray-700/60 rounded text-[9px] text-gray-500 px-2 flex items-center">
+                  <div className="flex items-center gap-1.5 border-b border-white/8 bg-black/10 px-3 py-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-400/70" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-300/70" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-300/70" />
+                    <div className="mx-2 flex h-5 flex-1 items-center rounded-full bg-white/[0.04] px-3 text-[10px] text-slate-500">
                       {activeNode?.label ?? "Page"}
                     </div>
                   </div>
 
-                  {/* Blocks */}
                   {blocks.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 gap-3">
-                      <p className="text-gray-600 text-xs">Drop blocks here</p>
+                      <p className="text-slate-500 text-xs">Drop blocks here</p>
                       <button
                         onClick={scaffoldPage}
                         disabled={scaffolding}
-                        className="text-xs px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-400 hover:text-gray-300 transition-colors disabled:opacity-50"
+                        className="button-secondary rounded-full px-4 py-2 text-xs disabled:opacity-50"
                       >
-                        {scaffolding ? "Scaffoldingâ€¦" : "Auto-scaffold from sitemap"}
+                        {scaffolding ? "Scaffolding..." : "Auto-scaffold from sitemap"}
                       </button>
                     </div>
                   ) : (
@@ -788,16 +753,14 @@ export default function WireframeEditor({
               </div>
             )}
 
-            {/* Zoom label */}
-            <div className="absolute bottom-3 left-3 text-xs text-gray-700 font-mono tabular-nums">
+            <div className="absolute bottom-3 left-3 rounded-full border border-white/10 bg-slate-950/80 px-3 py-1.5 text-xs text-slate-400 font-mono tabular-nums">
               {Math.round(transform.scale * 100)}%
             </div>
           </div>
         </div>
 
-        {/* â”€â”€ Right panel: Block props â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div
-          className={`shrink-0 border-l border-gray-800 bg-gray-900 transition-all duration-200 overflow-auto ${selectedBlock ? "w-64" : "w-0 overflow-hidden"
+          className={`shrink-0 border-l border-white/8 bg-black/10 transition-all duration-200 overflow-auto ${selectedBlock ? "w-[320px]" : "w-0 overflow-hidden"
             }`}
         >
           {selectedBlock && (
@@ -856,48 +819,44 @@ function BlockPropsPanel({
   const otherProps = Object.entries(localProps).filter(([k]) => k !== "layout");
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-5 space-y-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-white">Block Editor</h3>
-        <span className="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded">Props</span>
+        <div>
+          <p className="section-label">Block inspector</p>
+          <h3 className="mt-2 text-sm font-semibold text-white">Edit block properties</h3>
+        </div>
+        <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-slate-400">Props</span>
       </div>
 
       <div className="space-y-3">
         <div>
-          <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">
-            Label (Section Name)
-          </label>
+          <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1">Label</label>
           <input
             type="text"
             value={localLabel}
             onChange={(e) => { setLocalLabel(e.target.value); setDirty(true); }}
-            className="w-full text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="field py-2.5 text-xs"
             placeholder="e.g. Why Us"
           />
         </div>
         <div>
-          <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">
-            Type
-          </label>
+          <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1">Type</label>
           <input
             type="text"
             value={localType}
             onChange={(e) => { setLocalType(e.target.value); setDirty(true); }}
-            className="w-full text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="field py-2.5 text-xs"
             placeholder="e.g. Hero"
           />
         </div>
       </div>
 
-      <hr className="border-gray-800" />
+      <hr className="border-white/8" />
 
-      {/* Layout picker */}
       {variants.length > 0 && (
         <div>
-          <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1.5">
-            Layout Preset
-          </label>
-          <div className="grid grid-cols-2 gap-1">
+          <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1.5">Layout preset</label>
+          <div className="grid grid-cols-2 gap-2">
             {variants.map((variant) => (
               <button
                 key={variant}
@@ -905,9 +864,9 @@ function BlockPropsPanel({
                   setLocalProps((p) => ({ ...p, layout: variant }));
                   setDirty(true);
                 }}
-                className={`text-[11px] py-1.5 px-2 rounded border transition-colors text-left truncate ${currentLayout === variant
-                    ? "bg-brand-900/40 border-brand-600/60 text-brand-300 font-semibold"
-                    : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
+                className={`text-[11px] py-2 px-3 rounded-2xl border transition-colors text-left truncate ${currentLayout === variant
+                    ? "bg-brand-300/12 border-brand-300/30 text-brand-100 font-semibold"
+                    : "bg-white/[0.03] border-white/8 text-slate-400 hover:border-white/16 hover:text-slate-200"
                   }`}
               >
                 {variant}
@@ -917,12 +876,11 @@ function BlockPropsPanel({
         </div>
       )}
 
-      {/* Other props */}
       {otherProps.length > 0 && (
         <div className="space-y-3">
           {otherProps.map(([key, value]) => (
             <div key={key}>
-              <label className="block text-xs text-gray-400 mb-1 capitalize">
+              <label className="block text-xs text-slate-400 mb-1 capitalize">
                 {key.replace(/_/g, " ")}
               </label>
               {Array.isArray(value) ? (
@@ -931,7 +889,7 @@ function BlockPropsPanel({
                   rows={3}
                   value={(value as string[]).join("\n")}
                   onChange={(e) => handlePropChange(key, e.target.value.split("\n"))}
-                  className="w-full text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none font-mono"
+                  className="field resize-none font-mono text-xs"
                 />
               ) : typeof value === "number" ? (
                 <input
@@ -939,7 +897,7 @@ function BlockPropsPanel({
                   type="number"
                   value={value}
                   onChange={(e) => handlePropChange(key, Number(e.target.value))}
-                  className="w-full text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="field text-xs"
                 />
               ) : (
                 <input
@@ -947,7 +905,7 @@ function BlockPropsPanel({
                   type="text"
                   value={String(value ?? "")}
                   onChange={(e) => handlePropChange(key, e.target.value)}
-                  className="w-full text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="field text-xs"
                 />
               )}
             </div>
@@ -966,7 +924,7 @@ function BlockPropsPanel({
             });
             setDirty(false);
           }}
-          className="w-full text-xs py-2 bg-brand-600 hover:bg-brand-500 rounded-lg font-semibold transition-colors shadow-lg shadow-brand-900/20"
+          className="button-primary w-full justify-center rounded-full text-xs"
         >
           Save changes
         </button>
