@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Bot, Boxes, LayoutTemplate, Sparkles } from "lucide-react";
+import LaunchVisitorTracker from "@/components/analytics/LaunchVisitorTracker";
 import AppLogo from "@/components/ui/AppLogo";
+import WaitlistForm from "@/components/ui/WaitlistForm";
 
 const DEV_MODE = process.env.NEXT_PUBLIC_DEV_BYPASS === "true";
 
@@ -25,6 +27,7 @@ const featureCards = [
 export default function LandingPage() {
   return (
     <main className="relative overflow-hidden pb-20 pt-6 sm:pb-24 sm:pt-8">
+      <LaunchVisitorTracker />
       {DEV_MODE && (
         <div className="app-shell mb-6">
           <div className="glass-panel rounded-full px-4 py-2 text-xs text-amber-200">
@@ -48,7 +51,7 @@ export default function LandingPage() {
             <AppLogo />
             <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
               <Link href="/docs" className="button-secondary">Read docs</Link>
-              <Link href="/dashboard" className="button-secondary">Continue as guest</Link>
+              <Link href="/pricing" className="button-secondary">Pricing</Link>
               <Link href={DEV_MODE ? "/dashboard" : "/auth/login"} className="button-secondary">
                 {DEV_MODE ? "Workspace" : "Sign in"}
               </Link>
@@ -59,22 +62,22 @@ export default function LandingPage() {
             <div className="max-w-3xl">
               <p className="section-label">AI-native product architecture</p>
               <h1 className="headline-xl mt-5 max-w-4xl text-white">
-                Let your agent handle it.
+                Sitemaps and wireframes for AI coding agents.
               </h1>
               <p className="body-lg mt-6 max-w-2xl">
-                Layoutr gives humans and agents one shared workspace for page structure, layout planning, API access, and MCP-driven editing.
+                Plan site structure visually, refine wireframes in one workspace, and let agents read or edit the same project through REST and MCP.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Link href={DEV_MODE ? "/dashboard" : "/auth/signup"} className="button-primary">
-                  {DEV_MODE ? "Open dashboard" : "Create account"}
-                </Link>
-                <Link href="/dashboard" className="button-secondary">
-                  Continue without account
+                  {DEV_MODE ? "Open dashboard" : "Start free"}
                 </Link>
                 <Link href="/docs" className="button-secondary">
                   Explore API setup
                 </Link>
               </div>
+              <p className="mt-4 text-sm text-slate-400">
+                Start free if you want to use the product now. Explore API setup if you want to connect Layoutr to Codex, Claude Code, Cline, or other MCP-capable tools first.
+              </p>
               <div className="mt-10 flex flex-wrap gap-3 text-xs text-slate-400">
                 <span className="status-pill">Visual sitemap editor</span>
                 <span className="status-pill">Integrated wireframe canvas</span>
@@ -190,6 +193,36 @@ export default function LandingPage() {
                 <p className="text-2xl font-semibold text-white">1</p>
                 <p className="mt-2 leading-6 text-slate-400">Shared workspace across humans, API clients, and AI coding agents.</p>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="app-shell mt-10">
+        <div className="glass-panel rounded-[34px] px-6 py-8 sm:px-8 sm:py-10">
+          <div className="grid gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
+            <div>
+              <p className="section-label">Launch tracking</p>
+              <h2 className="headline-lg mt-5 max-w-xl text-white">
+                Every waitlist signup carries its source.
+              </h2>
+              <p className="body-sm mt-4 max-w-lg text-slate-300">
+                Signups capture source, medium, campaign, content, landing page, referrer, and the lead details needed to qualify launch demand.
+              </p>
+              <div className="mt-6 grid gap-3 text-sm text-slate-300">
+                <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
+                  <p className="font-medium text-white">UTM format</p>
+                  <p className="mt-2 text-slate-400">`utm_source=x`, `utm_medium=community`, `utm_campaign=launch_202605_waitlist`, `utm_content=hero_cta`</p>
+                </div>
+                <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
+                  <p className="font-medium text-white">Stored with the lead</p>
+                  <p className="mt-2 text-slate-400">Email, company, role, use case, team size, source tags, landing path, and referrer.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[28px] border border-white/10 bg-[#09111f] p-5">
+              <WaitlistForm />
             </div>
           </div>
         </div>

@@ -94,8 +94,8 @@ const tools: Array<{
 ];
 
 const quickSteps = [
-  "Create an API key in Settings.",
-  "Paste the matching config block into your coding tool.",
+  "Create an account and open Settings.",
+  "Generate an API key, then paste the matching config block into your coding tool.",
   "Restart the tool so the MCP server is discovered.",
 ];
 
@@ -112,8 +112,11 @@ export default function DocsPage() {
               <Link href="/" className="button-secondary">
                 Home
               </Link>
-              <Link href="/dashboard" className="button-secondary">
-                Workspace
+              <Link href="/pricing" className="button-secondary">
+                Pricing
+              </Link>
+              <Link href="/auth/login" className="button-secondary">
+                Sign in
               </Link>
             </div>
           </header>
@@ -125,9 +128,7 @@ export default function DocsPage() {
                 Connect Layoutr to your coding agent with one MCP server block.
               </h1>
               <p className="body-lg mt-5 max-w-2xl">
-                Every supported tool points at the same local server command. Generate an API key,
-                drop in the matching config, and your agent can read and modify projects, sitemaps,
-                wireframes, and design tokens directly.
+                Every supported tool points at the same local server command. Start free, create an API key in Settings, then drop in the matching config so your agent can read and modify projects, sitemaps, wireframes, and design tokens directly.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3 text-xs text-slate-400">
@@ -137,12 +138,10 @@ export default function DocsPage() {
               </div>
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
-                <Link href="/settings" className="button-primary">
-                  Generate API key
+                <Link href="/auth/signup" className="button-primary">
+                  Start free
                 </Link>
-                <a href="#tool-setup" className="button-secondary">
-                  Jump to setup
-                </a>
+                <Link href="/pricing" className="button-secondary">View pricing</Link>
               </div>
             </div>
 
@@ -154,12 +153,12 @@ export default function DocsPage() {
                   </div>
                   <div>
                     <p className="section-label">Required first</p>
-                    <p className="mt-2 text-base font-semibold text-white">Create a Layoutr API key</p>
+                    <p className="mt-2 text-base font-semibold text-white">Create an account, then generate an API key</p>
                   </div>
                 </div>
                 <p className="body-sm mt-4">
                   The config snippets below use <code className="text-slate-200">ltr_YOUR_API_KEY</code>.
-                  Replace that token with a real key from Settings before you restart your tool.
+                  After signup, open Settings, create a real key, and replace the placeholder before you restart your tool.
                 </p>
               </div>
 

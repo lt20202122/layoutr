@@ -1,26 +1,33 @@
 "use client";
 
 import { Check, LoaderCircle } from "lucide-react";
-import { useState, useEffect } from "react";
-
-const STORAGE_KEY = "waitlist_joined";
+import { useState } from "react";
 
 export default function WaitlistButton() {
   const [state, setState] = useState<"idle" | "loading" | "joined">("idle");
-
-  useEffect(() => {
-    if (localStorage.getItem(STORAGE_KEY) === "true") setState("joined");
-  }, []);
 
   async function handleClick() {
     if (state !== "idle") return;
     setState("loading");
 
     try {
-      const res = await fetch("/api/waitlist", { method: "POST" });
+      const params = new URLSearchParams(window.location.search);
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          signupPath: window.location.pathname,
+          landingPath: window.location.pathname,
+          referrer: document.referrer,
+          utmSource: params.get("utm_source") ?? "",
+          utmMedium: params.get("utm_medium") ?? "",
+          utmCampaign: params.get("utm_campaign") ?? "",
+          utmContent: params.get("utm_content") ?? "",
+          utmTerm: params.get("utm_term") ?? "",
+        }),
+      });
       if (res.ok) {
         setState("joined");
-        localStorage.setItem(STORAGE_KEY, "true");
       } else {
         setState("idle");
       }

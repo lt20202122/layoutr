@@ -1,17 +1,17 @@
+import Link from "next/link";
 import WaitlistButton from "@/components/ui/WaitlistButton";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
 
 const plans = [
   {
     id: "free",
     name: "Free",
     price: "$0",
-    note: "For evaluating the workspace",
+    note: "Best for trying the workspace",
     features: [
       "100 credits per month",
       "DeepSeek V4 Flash access",
       "1 project",
-      "500 credit monthly purchase cap",
+      "Start using Layoutr immediately",
     ],
   },
   {
@@ -24,7 +24,7 @@ const plans = [
       "1,000 credits per month",
       "DeepSeek V4 Flash + Claude Sonnet 4.5",
       "Unlimited projects",
-      "5,000 credit monthly purchase cap",
+      "Join waitlist for paid access",
     ],
   },
   {
@@ -36,7 +36,7 @@ const plans = [
       "5,000 credits per month",
       "All models including GPT-5.5",
       "Unlimited projects",
-      "50,000 credit monthly purchase cap",
+      "Join waitlist for paid access",
     ],
   },
   {
@@ -48,83 +48,76 @@ const plans = [
       "25,000 credits per month",
       "All models",
       "Priority support",
-      "500,000 credit monthly purchase cap",
+      "Join waitlist for paid access",
     ],
   },
 ];
 
-export default async function PricingPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const svc = createServiceClient();
-  const { data: profile } = await svc.from("user_profiles").select("plan").eq("id", user?.id).single();
-  const currentPlan = profile?.plan ?? "free";
-
+export default function PricingPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <section className="glass-panel rounded-[30px] p-6 sm:p-8">
         <p className="section-label">Pricing</p>
         <div className="mt-4 max-w-3xl">
-          <h1 className="headline-lg text-white">Simple monthly plans with credit-based AI usage.</h1>
+          <h1 className="headline-lg text-white">Start free now. Join the waitlist for paid plans.</h1>
           <p className="body-lg mt-4">
-            The workspace stays direct and utilitarian. Credits only apply when you use Layoutr’s integrated generation layer.
+            Layoutr is open for free use today. Paid plans and richer credit top-ups are still rolling out, so you can try the product now and join the waitlist for expanded billing access.
           </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link href="/auth/signup" className="button-primary">
+              Start free
+            </Link>
+            <Link href="/docs" className="button-secondary">
+              Read docs
+            </Link>
+          </div>
         </div>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-4">
-        {plans.map((plan) => {
-          const isCurrent = currentPlan === plan.id;
-          return (
-            <article
-              key={plan.id}
-              className={`relative rounded-[32px] p-6 transition-transform hover:-translate-y-1 ${
-                plan.featured ? "glass-panel-strong" : "glass-panel"
-              }`}
-            >
-              {plan.featured && (
-                <div className="absolute right-5 top-5 rounded-full border border-brand-300/25 bg-brand-400/12 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-100">
-                  Recommended
+        {plans.map((plan) => (
+          <article
+            key={plan.id}
+            className={`relative rounded-[32px] p-6 transition-transform hover:-translate-y-1 ${
+              plan.featured ? "glass-panel-strong" : "glass-panel"
+            }`}
+          >
+            {plan.featured && (
+              <div className="absolute right-5 top-5 rounded-full border border-brand-300/25 bg-brand-400/12 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-100">
+                Recommended
+              </div>
+            )}
+
+            <div className="pt-8">
+              <p className="section-label">{plan.note}</p>
+              <h2 className="mt-4 text-2xl font-semibold text-white">{plan.name}</h2>
+              <div className="mt-4 flex items-end gap-2">
+                <span className="text-4xl font-semibold text-white">{plan.price}</span>
+                <span className="pb-1 text-sm text-slate-500">/ month</span>
+              </div>
+            </div>
+
+            <ul className="mt-8 space-y-3 text-sm leading-6 text-slate-300">
+              {plan.features.map((feature) => (
+                <li key={feature} className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
+                  {feature}
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-8">
+              {plan.id === "free" ? (
+                <Link href="/auth/signup" className="button-primary w-full justify-center">
+                  Start free
+                </Link>
+              ) : (
+                <div className="w-full">
+                  <WaitlistButton />
                 </div>
               )}
-              {isCurrent && (
-                <div className="absolute left-5 top-5 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white">
-                  Current
-                </div>
-              )}
-
-              <div className="pt-8">
-                <p className="section-label">{plan.note}</p>
-                <h2 className="mt-4 text-2xl font-semibold text-white">{plan.name}</h2>
-                <div className="mt-4 flex items-end gap-2">
-                  <span className="text-4xl font-semibold text-white">{plan.price}</span>
-                  <span className="pb-1 text-sm text-slate-500">/ month</span>
-                </div>
-              </div>
-
-              <ul className="mt-8 space-y-3 text-sm leading-6 text-slate-300">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-8">
-                {isCurrent ? (
-                  <div className="button-secondary w-full justify-center">Current plan</div>
-                ) : (
-                  <div className="w-full">
-                    <WaitlistButton />
-                  </div>
-                )}
-              </div>
-            </article>
-          );
-        })}
+            </div>
+          </article>
+        ))}
       </section>
 
       <section className="grid gap-6 xl:grid-cols-2">
