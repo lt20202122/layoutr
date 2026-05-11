@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClientOrNull } from "@/lib/supabase/server";
 import AppLogo from "@/components/ui/AppLogo";
 import CreditsDisplay from "@/components/ui/CreditsDisplay";
 import DashboardNav from "@/components/ui/DashboardNav";
@@ -15,16 +15,16 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await createClientOrNull();
+  const user = supabase
+    ? (await supabase.auth.getUser()).data.user
+    : null;
 
   const { data: profile } = user
-    ? await supabase.from("user_profiles").select("credits").eq("id", user.id).single()
+    ? await supabase!.from("user_profiles").select("credits").eq("id", user.id).single()
     : { data: null };
 
-  const { data: projects } = DEV_MODE
+  const { data: projects } = DEV_MODE && supabase
     ? await supabase
         .from("projects")
         .select("id, name")

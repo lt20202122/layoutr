@@ -1,5 +1,5 @@
 import { createBrowserClient } from "@supabase/ssr";
-import { getSupabasePublicEnv } from "./env";
+import { getSupabasePublicEnv, getSupabasePublicEnvOrNull } from "./env";
 
 export function createClient() {
   const { url, anonKey } = getSupabasePublicEnv();
@@ -7,5 +7,15 @@ export function createClient() {
   return createBrowserClient(
     url,
     anonKey
+  );
+}
+
+export function createClientOrNull() {
+  const env = getSupabasePublicEnvOrNull();
+  if (!env) return null;
+
+  return createBrowserClient(
+    env.url,
+    env.anonKey
   );
 }

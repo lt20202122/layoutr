@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, LayoutTemplate } from "lucide-react";
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClientOrNull } from "@/lib/supabase/server";
 import GuestWireframePage from "@/components/guest/GuestWireframePage";
 import WireframeEditor from "@/components/wireframe/WireframeEditor";
 
@@ -14,24 +14,24 @@ export default async function WireframePage({ params, searchParams }: Params) {
   const { projectId } = await params;
   const { nodeId } = await searchParams;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await createClientOrNull();
+  const user = supabase
+    ? (await supabase.auth.getUser()).data.user
+    : null;
 
   if (!user) {
     return <GuestWireframePage projectId={projectId} nodeId={nodeId} />;
   }
 
-  const projectQuery = supabase.from("projects").select("*").eq("id", projectId);
+  const projectQuery = supabase!.from("projects").select("*").eq("id", projectId);
   projectQuery.eq("user_id", user.id);
   const { data: project } = await projectQuery.single();
   if (!project) notFound();
 
-  const { data: profile } = await supabase.from("user_profiles").select("plan").eq("id", user?.id).single();
+  const { data: profile } = await supabase!.from("user_profiles").select("plan").eq("id", user.id).single();
   const userPlan = profile?.plan ?? "free";
 
-  const { data: nodes } = await supabase
+  const { data: nodes } = await supabase!
     .from("sitemap_nodes")
     .select("id, label, type, metadata")
     .eq("project_id", projectId)
@@ -40,7 +40,7 @@ export default async function WireframePage({ params, searchParams }: Params) {
   const selectedNode = nodes?.find((n) => n.id === nodeId) ?? nodes?.[0] ?? null;
 
   const { data: initialBlocks } = selectedNode
-    ? await supabase
+    ? await supabase!
         .from("wireframe_blocks")
         .select("*")
         .eq("node_id", selectedNode.id)

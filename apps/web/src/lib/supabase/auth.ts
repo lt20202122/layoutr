@@ -9,16 +9,27 @@ function normalizeBaseUrl(value: string) {
   return trimTrailingSlash(withProtocol);
 }
 
-export function getAuthCallbackUrl(origin?: string) {
-  const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  const vercelUrl = process.env.NEXT_PUBLIC_VERCEL_URL?.trim();
-  const baseUrl = configuredSiteUrl || origin || vercelUrl;
+export function getConfiguredAppUrl() {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_VERCEL_URL?.trim() ||
+    null
+  );
+}
+
+export function getAppBaseUrl(origin?: string) {
+  const baseUrl = origin || getConfiguredAppUrl();
 
   if (!baseUrl) {
-    throw new Error("Missing base URL for Supabase auth callback");
+    throw new Error("Missing base URL for Layoutr app");
   }
 
-  return `${normalizeBaseUrl(baseUrl)}${CALLBACK_PATH}`;
+  return normalizeBaseUrl(baseUrl);
+}
+
+export function getAuthCallbackUrl(origin?: string) {
+  return `${getAppBaseUrl(origin)}${CALLBACK_PATH}`;
 }
 
 export function getAuthErrorMessage(error: string | null, errorDescription?: string | null) {

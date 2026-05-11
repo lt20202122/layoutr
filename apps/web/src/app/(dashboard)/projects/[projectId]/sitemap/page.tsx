@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Layers3 } from "lucide-react";
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClientOrNull } from "@/lib/supabase/server";
 import SitemapEditor from "@/components/sitemap/SitemapEditor";
 import GuestSitemapPage from "@/components/guest/GuestSitemapPage";
 import type { SitemapNode } from "@/components/sitemap/sitemapUtils";
@@ -10,25 +10,25 @@ type Params = { params: Promise<{ projectId: string }> };
 
 export default async function SitemapPage({ params }: Params) {
   const { projectId } = await params;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await createClientOrNull();
+  const user = supabase
+    ? (await supabase.auth.getUser()).data.user
+    : null;
 
   if (!user) {
     return <GuestSitemapPage projectId={projectId} />;
   }
 
-  const projectQuery = supabase.from("projects").select("*").eq("id", projectId);
+  const projectQuery = supabase!.from("projects").select("*").eq("id", projectId);
   projectQuery.eq("user_id", user.id);
 
   const { data: project } = await projectQuery.single();
   if (!project) notFound();
 
-  const { data: profile } = await supabase.from("user_profiles").select("plan").eq("id", user?.id).single();
+  const { data: profile } = await supabase!.from("user_profiles").select("plan").eq("id", user.id).single();
   const userPlan = profile?.plan ?? "free";
 
-  const { data: rawNodes } = await supabase
+  const { data: rawNodes } = await supabase!
     .from("sitemap_nodes")
     .select("*")
     .eq("project_id", projectId)

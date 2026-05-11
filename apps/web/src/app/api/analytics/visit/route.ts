@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ok, err } from "@/lib/api";
 import { appendAnalyticsSheetRow } from "@/lib/analytics-sheet";
 import { createServiceClient } from "@/lib/supabase/server";
+import { hasSupabasePublicEnv } from "@/lib/supabase/env";
 import {
   getRequestContext,
   mergeAttribution,
@@ -41,6 +42,10 @@ export async function POST(request: NextRequest) {
     utmTerm: parsed.data.utmTerm,
   });
   const requestContext = getRequestContext(request.headers);
+
+  if (!hasSupabasePublicEnv() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return ok({ tracked: false });
+  }
 
   const supabase = createServiceClient();
 

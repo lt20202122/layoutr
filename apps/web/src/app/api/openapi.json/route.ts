@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getAppBaseUrl } from "@/lib/supabase/auth";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const spec: Record<string, any> = {
@@ -9,9 +10,7 @@ const spec: Record<string, any> = {
     description:
       "AI-native sitemap and wireframe builder API. Requires `Authorization: Bearer ltr_<key>` header or a valid Supabase session cookie.",
   },
-  servers: [
-    { url: "https://layoutr-xi.vercel.app/api", description: "Production" },
-  ],
+  servers: [],
   paths: {
     "/projects": {
       get: {
@@ -603,5 +602,7 @@ const spec: Record<string, any> = {
 };
 
 export async function GET() {
+  const appBaseUrl = getAppBaseUrl();
+  spec.servers = [{ url: `${appBaseUrl}/api`, description: "Configured app" }];
   return NextResponse.json(spec);
 }

@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
-import { getSupabasePublicEnv } from "./env";
+import { getSupabasePublicEnv, getSupabasePublicEnvOrNull } from "./env";
 
 type CookieToSet = { name: string; value: string; options?: Record<string, unknown> };
 
@@ -30,6 +30,17 @@ export async function createClient() {
   return createServerClient(
     url,
     anonKey,
+    { cookies: await getCookieMethods() }
+  );
+}
+
+export async function createClientOrNull() {
+  const env = getSupabasePublicEnvOrNull();
+  if (!env) return null;
+
+  return createServerClient(
+    env.url,
+    env.anonKey,
     { cookies: await getCookieMethods() }
   );
 }

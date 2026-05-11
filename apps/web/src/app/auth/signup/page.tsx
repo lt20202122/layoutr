@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, Chrome, Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import AppLogo from "@/components/ui/AppLogo";
-import { createClient } from "@/lib/supabase/client";
+import { createClientOrNull } from "@/lib/supabase/client";
 import { getAuthCallbackUrl, getAuthErrorMessageFromUrl } from "@/lib/supabase/auth";
 
 export default function SignupPage() {
@@ -24,7 +24,12 @@ export default function SignupPage() {
   async function handleGoogle() {
     setError(null);
     setLoading(true);
-    const supabase = createClient();
+    const supabase = createClientOrNull();
+    if (!supabase) {
+      setError("Supabase auth is not configured in this environment.");
+      setLoading(false);
+      return;
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: getAuthCallbackUrl(window.location.origin) },
@@ -40,7 +45,12 @@ export default function SignupPage() {
     setError(null);
     setLoading(true);
 
-    const supabase = createClient();
+    const supabase = createClientOrNull();
+    if (!supabase) {
+      setError("Supabase auth is not configured in this environment.");
+      setLoading(false);
+      return;
+    }
     const { error } = await supabase.auth.signUp({
       email,
       password,
