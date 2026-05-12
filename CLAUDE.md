@@ -2,7 +2,7 @@
 
 **Layoutr** is an AI-native sitemap and wireframe builder. It is built API/MCP-first, targeting AI coding agents (Claude Code, Codex, Cline, Kilo Code, opencode) as the primary power users.
 
-Live: https://layoutr-xi.vercel.app
+Live: https://layoutr-app.netlify.app
 
 ---
 
@@ -35,9 +35,11 @@ layoutr/
 ## Architecture: two layers
 
 ### Layer 1 — Direct CRUD via API/MCP (free, no credits)
+
 REST API and MCP server. AI agents call these directly to build/read/update project data without ever hitting an LLM through Layoutr.
 
 ### Layer 2 — Integrated AI (`/api/ai/generate`, `ai_generate` MCP tool)
+
 Users/agents can ask Layoutr's built-in AI to generate or modify sitemaps and wireframes from natural language. This costs credits.
 
 ---
@@ -49,6 +51,7 @@ Users/agents can ask Layoutr's built-in AI to generate or modify sitemaps and wi
 - **Dev bypass**: set `NEXT_PUBLIC_DEV_BYPASS=true` + `DEV_USER_ID=<uuid>` to skip auth in all routes
 
 ### Supabase clients
+
 - `createClient()` — session-based, for server components only
 - `createServiceClient()` — plain `@supabase/supabase-js` with service role key, **bypasses RLS**, used in all API routes
 
@@ -56,26 +59,26 @@ Users/agents can ask Layoutr's built-in AI to generate or modify sitemaps and wi
 
 ## Database tables (Supabase)
 
-| Table | Purpose |
-|-------|---------|
-| `projects` | User projects |
-| `sitemap_nodes` | Flat tree of pages/sections/folders/links/modals/components |
-| `wireframe_blocks` | Ordered blocks per sitemap node (Navbar, Hero, Cards, etc.) |
-| `design_system` | Design tokens per project (colors, typography, spacing) |
-| `api_keys` | REST API keys (`ltr_...` prefix) for MCP/CLI access |
-| `llm_api_keys` | BYOK LLM keys — AES-256-GCM encrypted (`key_ciphertext`, `key_iv`) |
-| `user_profiles` | Credit balance (default 100 free credits per user) |
-| `waitlist` | Users awaiting plans and credit top-ups |
+| Table              | Purpose                                                            |
+| ------------------ | ------------------------------------------------------------------ |
+| `projects`         | User projects                                                      |
+| `sitemap_nodes`    | Flat tree of pages/sections/folders/links/modals/components        |
+| `wireframe_blocks` | Ordered blocks per sitemap node (Navbar, Hero, Cards, etc.)        |
+| `design_system`    | Design tokens per project (colors, typography, spacing)            |
+| `api_keys`         | REST API keys (`ltr_...` prefix) for MCP/CLI access                |
+| `llm_api_keys`     | BYOK LLM keys — AES-256-GCM encrypted (`key_ciphertext`, `key_iv`) |
+| `user_profiles`    | Credit balance (default 100 free credits per user)                 |
+| `waitlist`         | Users awaiting plans and credit top-ups                            |
 
 ---
 
 ## Credit system
 
-| Tier | Model | ID | Input cr/1M | Output cr/1M | Status |
-|------|-------|----|-------------|--------------|--------|
-| Starter | DeepSeek V4 Flash | `deepseek-chat` | 540 | 2,200 | Active |
-| Pro | Claude Sonnet 4.5 | `claude-sonnet-4-5` | 6,000 | 30,000 | Active |
-| Max | GPT-5.5 | `gpt-5.5` | 30,000 | 150,000 | Locked |
+| Tier    | Model             | ID                  | Input cr/1M | Output cr/1M | Status |
+| ------- | ----------------- | ------------------- | ----------- | ------------ | ------ |
+| Starter | DeepSeek V4 Flash | `deepseek-chat`     | 540         | 2,200        | Active |
+| Pro     | Claude Sonnet 4.5 | `claude-sonnet-4-5` | 6,000       | 30,000       | Active |
+| Max     | GPT-5.5           | `gpt-5.5`           | 30,000      | 150,000      | Locked |
 
 - 1 credit = $0.0001 (1/100th of a cent). 100 free credits = $0.01.
 - Rates are 2× markup over real API cost, tracked as input/output credit rates per 1M tokens.
@@ -136,6 +139,7 @@ Version: 0.2.0
 ### 18 tools
 
 **Projects**
+
 - `list_projects` — List all projects
 - `create_project` — Create a project
 - `get_project` — Get a project by ID
@@ -143,6 +147,7 @@ Version: 0.2.0
 - `delete_project` — Delete project + all nodes
 
 **Sitemap**
+
 - `get_sitemap` — Get all nodes (flat list, use parent_id for tree)
 - `create_node` — Add a sitemap node
 - `update_node` — Update node properties
@@ -151,15 +156,18 @@ Version: 0.2.0
 - `scaffold_sitemap` — Bulk-create a full sitemap from natural language
 
 **AI**
+
 - `ai_generate` — Generate/update sitemap or wireframe via integrated AI (costs credits)
 
 **Wireframe**
+
 - `get_wireframe` — Get blocks for a node
 - `create_block` — Add a block to a node
 - `update_block` — Update a block
 - `delete_block` — Remove a block
 
 **Design System**
+
 - `get_design_system` — Fetch design tokens
 - `update_design_system` — Update tokens
 
@@ -195,25 +203,28 @@ Detects which AI coding tools are installed and injects the MCP config block aut
 ## Environment variables
 
 ### Required (Vercel + local)
-| Var | Purpose |
-|-----|---------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (server only, bypasses RLS) |
+
+| Var                             | Purpose                                      |
+| ------------------------------- | -------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase project URL                         |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key                            |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Service role key (server only, bypasses RLS) |
 
 ### Dev mode
-| Var | Purpose |
-|-----|---------|
-| `NEXT_PUBLIC_DEV_BYPASS` | Set to `true` to skip auth |
-| `DEV_USER_ID` | UUID of dev user to impersonate |
+
+| Var                      | Purpose                         |
+| ------------------------ | ------------------------------- |
+| `NEXT_PUBLIC_DEV_BYPASS` | Set to `true` to skip auth      |
+| `DEV_USER_ID`            | UUID of dev user to impersonate |
 
 ### Default LLM providers
-| Var | Purpose |
-|-----|---------|
-| `ANTHROPIC_API_KEY` | Default Anthropic key (`sk-ant-...`) |
-| `OPENAI_API_KEY` | Default OpenAI key (`sk-...`) |
-| `GOOGLE_GENERATIVE_AI_API_KEY` | Default Google key (`AIza...`) |
-| `GROQ_API_KEY` | Default Groq key (`gsk_...`) |
+
+| Var                            | Purpose                              |
+| ------------------------------ | ------------------------------------ |
+| `ANTHROPIC_API_KEY`            | Default Anthropic key (`sk-ant-...`) |
+| `OPENAI_API_KEY`               | Default OpenAI key (`sk-...`)        |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | Default Google key (`AIza...`)       |
+| `GROQ_API_KEY`                 | Default Groq key (`gsk_...`)         |
 
 > **Note**: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `GROQ_API_KEY` are **not yet set on Vercel**. Without them, AI generation will return a 502 error when calling `/api/ai/generate`.
 
@@ -222,6 +233,7 @@ Detects which AI coding tools are installed and injects the MCP config block aut
 ## Current status
 
 ### Done ✅
+
 - Supabase auth (email + Google OAuth)
 - Project CRUD with RLS (service role bypass in API routes)
 - Sitemap editor — visual canvas, drag-and-drop, node types, collapsible tree
@@ -236,6 +248,7 @@ Detects which AI coding tools are installed and injects the MCP config block aut
 - TypeScript clean (0 errors across all 3 packages)
 
 ### Pending ⏳
+
 - Add default provider API keys to Vercel (`ANTHROPIC_API_KEY` etc.)
 - Publish `@layoutr/mcp-server` to npm
 - Publish `@layoutr/cli` to npm
@@ -248,17 +261,17 @@ Detects which AI coding tools are installed and injects the MCP config block aut
 
 ## Key files
 
-| File | Purpose |
-|------|---------|
-| `apps/web/src/lib/supabase/server.ts` | `createClient()` + `createServiceClient()` |
-| `apps/web/src/lib/api.ts` | `authenticate()`, `ok()`, `err()` helpers |
-| `apps/web/src/lib/crypto.ts` | AES-256-GCM `encryptKey()` / `decryptKey()` |
-| `apps/web/src/lib/credits.ts` | `computeCredits()`, `estimateCredits()`, `ModelId`, `CREDIT_VALUE_USD`, `MIN_CREDITS` |
-| `apps/web/src/app/api/ai/generate/route.ts` | AI generation endpoint |
-| `apps/web/src/components/sitemap/SitemapEditor.tsx` | Visual sitemap canvas |
-| `apps/web/src/components/sitemap/AiPanel.tsx` | AI chat panel (model picker, credits) |
-| `apps/web/src/components/wireframe/WireframeEditor.tsx` | Wireframe canvas |
-| `apps/web/src/components/wireframe/BlockLibrary.tsx` | 9 wireframe block types |
-| `packages/mcp-server/src/index.ts` | MCP server + 18 tools |
-| `packages/cli/src/index.ts` | `npx layoutr init` CLI |
-| `supabase/migrations/` | 4 migrations (schema, credits+design, encrypted keys, waitlist) |
+| File                                                    | Purpose                                                                               |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `apps/web/src/lib/supabase/server.ts`                   | `createClient()` + `createServiceClient()`                                            |
+| `apps/web/src/lib/api.ts`                               | `authenticate()`, `ok()`, `err()` helpers                                             |
+| `apps/web/src/lib/crypto.ts`                            | AES-256-GCM `encryptKey()` / `decryptKey()`                                           |
+| `apps/web/src/lib/credits.ts`                           | `computeCredits()`, `estimateCredits()`, `ModelId`, `CREDIT_VALUE_USD`, `MIN_CREDITS` |
+| `apps/web/src/app/api/ai/generate/route.ts`             | AI generation endpoint                                                                |
+| `apps/web/src/components/sitemap/SitemapEditor.tsx`     | Visual sitemap canvas                                                                 |
+| `apps/web/src/components/sitemap/AiPanel.tsx`           | AI chat panel (model picker, credits)                                                 |
+| `apps/web/src/components/wireframe/WireframeEditor.tsx` | Wireframe canvas                                                                      |
+| `apps/web/src/components/wireframe/BlockLibrary.tsx`    | 9 wireframe block types                                                               |
+| `packages/mcp-server/src/index.ts`                      | MCP server + 18 tools                                                                 |
+| `packages/cli/src/index.ts`                             | `npx layoutr init` CLI                                                                |
+| `supabase/migrations/`                                  | 4 migrations (schema, credits+design, encrypted keys, waitlist)                       |
