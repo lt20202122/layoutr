@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ok, err, authenticate } from "@/lib/api";
+import { insertWireframeBlocks } from "@/lib/wireframe-blocks";
 
 const CreateBlockSchema = z.object({
   type: z.string(),
@@ -72,19 +73,15 @@ export async function POST(request: NextRequest, { params }: Params) {
     orderIndex = count ?? 0;
   }
 
-  const { data, error } = await supabase
-    .from("wireframe_blocks")
-    .insert({
-      node_id: nodeId,
-      type: parsed.data.type,
-      label: parsed.data.label ?? parsed.data.type,
-      composition: parsed.data.composition ?? null,
-      order_index: orderIndex,
-      props: parsed.data.props ?? {},
-    })
-    .select()
-    .single();
+  const { data, error } = await insertWireframeBlocks(supabase, {
+    node_id: nodeId,
+    type: parsed.data.type,
+    label: parsed.data.label ?? parsed.data.type,
+    composition: parsed.data.composition ?? null,
+    order_index: orderIndex,
+    props: parsed.data.props ?? {},
+  });
 
   if (error) return err(error.message, 500);
-  return ok(data, 201);
+  return ok(Array.isArray(data) ? data[0] : data, 201);
 }

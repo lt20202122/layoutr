@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ok, err, authenticate } from "@/lib/api";
 import { mapSectionToBlock } from "@/components/sitemap/sitemapUtils";
+import { insertWireframeBlocks } from "@/lib/wireframe-blocks";
 
 function getDefaultBlocksForPage(label: string, metadata?: any) {
   const sections = metadata?.sections;
@@ -142,7 +143,8 @@ export async function POST(
       },
     }));
 
-    await supabase.from("wireframe_blocks").insert(toInsert);
+    const { error } = await insertWireframeBlocks(supabase, toInsert);
+    if (error) return err(error.message, 500);
     pagesUpdated++;
   }
 

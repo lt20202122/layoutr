@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ok, err, authenticate } from "@/lib/api";
+import { updateWireframeBlock } from "@/lib/wireframe-blocks";
 
 const UpdateBlockSchema = z.object({
   type: z.string().optional(),
@@ -44,12 +45,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const owns = await assertBlockOwner(supabase, blockId, nodeId, projectId, auth.userId);
   if (!owns) return err("Block not found", 404);
 
-  const { data, error } = await supabase
-    .from("wireframe_blocks")
-    .update(parsed.data)
-    .eq("id", blockId)
-    .select()
-    .single();
+  const { data, error } = await updateWireframeBlock(supabase, blockId, parsed.data);
 
   if (error) return err(error.message, 500);
   return ok(data);

@@ -10,6 +10,7 @@ import { ok, err, authenticate } from "@/lib/api";
 import { computeCredits, MIN_CREDITS, CREDIT_VALUE_USD, ModelId } from "@/lib/credits";
 import { PLAN_ALLOWED_MODELS, PlanId } from "@/lib/plans";
 import { GoogleGenAI } from "@google/genai";
+import { insertWireframeBlocks } from "@/lib/wireframe-blocks";
 
 const defaultAnthropic = createAnthropic();
 const defaultOpenAI = createOpenAI();
@@ -272,7 +273,8 @@ export async function POST(
       },
     }));
 
-    await supabase.from("wireframe_blocks").insert(toInsert);
+    const { error } = await insertWireframeBlocks(supabase, toInsert);
+    if (error) return err(error.message, 500);
     pagesUpdated++;
   }
 
