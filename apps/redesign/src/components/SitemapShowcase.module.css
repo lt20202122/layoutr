@@ -1,0 +1,400 @@
+.showcase h2 {
+    position: absolute;
+    top: 6.856187%;
+    left: 0.501672%;
+    width: 98.996656%;
+    white-space: nowrap;
+    font-size: min(50px, 4.180602cqw);
+}
+
+.showcase {
+    position: relative;
+    left: 50%;
+    width: min(1196px, 100vw);
+    aspect-ratio: 1;
+    margin-top: 40px;
+    overflow: hidden;
+    color: #000;
+    background: #fff;
+    container-type: inline-size;
+    transform: translateX(-50%);
+}
+
+.sparkSurface {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+
+
+.connectors {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.connectors path {
+    stroke: #000;
+    stroke-width: 1;
+}
+
+.card {
+    position: absolute;
+    z-index: 2;
+    overflow: hidden;
+    font-family: var(--font-instrument-sans), "Instrument Sans", sans-serif;
+    color: #fff;
+    background: #1e2d42;
+    border-radius: min(30px, 2.508361cqw);
+}
+
+.card,
+.sidebar {
+    box-shadow: 0 min(10px, 0.83612cqw) min(28px, 2.341137cqw) rgba(30, 45, 66, 0.12);
+}
+
+.cardHome {
+    top: 18.394649%;
+    left: 34.364548%;
+    width: 31.270903%;
+    height: 31.772575%;
+}
+
+.cardProjects {
+    top: 60.785953%;
+    left: 10.367893%;
+    width: 23.160535%;
+    height: 25.334448%;
+}
+
+.cardContact {
+    top: 60.785953%;
+    left: 66.471572%;
+    width: 23.160535%;
+    height: 25.334448%;
+}
+
+.cardHeader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #4c6992;
+    border-radius: min(30px, 2.508361cqw) min(30px, 2.508361cqw) 0 0;
+}
+
+.cardHome .cardHeader {
+    height: 17.894737%;
+}
+
+.cardProjects .cardHeader,
+.cardContact .cardHeader {
+    height: 22.442244%;
+}
+
+.cardTitle {
+    position: absolute;
+    z-index: 2;
+    margin: 0;
+    font-size: min(24px, 2.006689cqw);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0;
+}
+
+.cardHome .cardTitle {
+    top: 6.842105%;
+    left: 42.245989%;
+}
+
+.cardProjects .cardTitle,
+.cardContact .cardTitle {
+    top: 8.580858%;
+    left: 41.516245%;
+}
+
+.control {
+    position: absolute;
+    z-index: 2;
+    display: grid;
+    top: 50%;
+    transform: translateY(-50%);
+    width: min(32px, 2.675585cqw);
+    height: min(32px, 2.675585cqw);
+    color: #eaeaea;
+    place-items: center;
+    background: #344864;
+    border-radius: 999px;
+}
+
+.icon {
+    overflow: visible;
+    stroke: currentcolor;
+    stroke-width: min(1.6px, 0.133779cqw);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.iconTrash {
+    width: min(16px, 1.337793cqw);
+    height: min(16px, 1.337793cqw);
+}
+
+.iconArrow,
+.iconCheck {
+    width: min(20px, 1.672241cqw);
+    height: min(20px, 1.672241cqw);
+}
+
+.cardHome .controlTrash {
+    left: 5.614973%;
+}
+
+.cardHome .controlArrow {
+    left: 17.647059%;
+}
+
+.cardHome .controlCheck {
+    right: 6.684492%;
+}
+
+.cardProjects .controlTrash,
+.cardContact .controlTrash {
+    left: 5.415162%;
+}
+
+.cardProjects .controlArrow,
+.cardContact .controlArrow {
+    left: 21.66065%;
+}
+
+.cardProjects .controlCheck,
+.cardContact .controlCheck {
+    right: 6.498195%;
+}
+
+.cardContent {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: min(2px, 0.167224cqw);
+}
+
+.cardHome .cardContent {
+    top: 21.052632%;
+    left: 4.278075%;
+    width: 91.44385%;
+    height: 75.263158%;
+}
+
+.cardProjects .cardContent,
+.cardContact .cardContent {
+    top: 25.742574%;
+    left: 3.971119%;
+    width: 92.418773%;
+    height: 70.627063%;
+}
+
+.block {
+    position: relative;
+    display: flex;
+    flex: 0 0 min(70px, 5.852843cqw);
+    align-items: center;
+    width: 100%;
+    padding-left: min(15px, 1.254181cqw);
+    font-size: min(24px, 2.006689cqw);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0;
+    transform-origin: center;
+}
+
+.block0 {
+    background: linear-gradient(94deg, #1abc9c 0%, #16a085 100%);
+    border-radius: min(15px, 1.254181cqw) min(15px, 1.254181cqw) min(5px, 0.41806cqw) min(5px, 0.41806cqw);
+}
+
+.block1,
+.cardHome .block2 {
+    background: linear-gradient(94deg, #34495e 0%, #2d5a87 100%);
+    border-radius: min(5px, 0.41806cqw);
+}
+
+.cardHome .block3,
+.cardProjects .block2,
+.cardContact .block2 {
+    background: linear-gradient(94deg, #5c6bc0 0%, #7986cb 100%);
+    border-radius: min(5px, 0.41806cqw) min(5px, 0.41806cqw) min(30px, 2.508361cqw) min(30px, 2.508361cqw);
+}
+
+.focusBlock {
+    z-index: 3;
+}
+
+.focusBlock::after {
+    position: absolute;
+    right: min(18px, 1.505017cqw);
+    width: min(10px, 0.83612cqw);
+    height: min(10px, 0.83612cqw);
+    content: "";
+    background: #c2f003;
+    border-radius: 999px;
+    opacity: 0.95;
+}
+
+.cursor {
+    position: absolute;
+    z-index: 6;
+    display: grid;
+    width: min(48px, 4.013378cqw);
+    height: min(48px, 4.013378cqw);
+    color: #000;
+    pointer-events: none;
+    filter: drop-shadow(0 min(7px, 0.585284cqw) min(7px, 0.585284cqw) rgba(0, 0, 0, 0.2));
+    place-items: center;
+    transform: translate(-16%, -10%);
+}
+
+.cursor svg {
+    width: min(38px, 3.177258cqw);
+    height: min(38px, 3.177258cqw);
+    fill: #fff;
+    stroke: currentcolor;
+    stroke-width: 2.1;
+}
+
+.sidebar {
+    position: absolute;
+    top: 25.25%;
+    right: 5.25%;
+    z-index: 5;
+    width: min(305px, 25.501672cqw);
+    overflow: hidden;
+    font-family: var(--font-instrument-sans), "Instrument Sans", sans-serif;
+    color: #fff;
+    background: #1e2d42;
+    border-radius: min(24px, 2.006689cqw);
+}
+
+.sidebarHeader {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: min(7px, 0.585284cqw);
+    height: min(54px, 4.51505cqw);
+    padding: 0 min(15px, 1.254181cqw);
+    background: #4c6992;
+}
+
+.sidebarHeader h3 {
+    position: absolute;
+    left: 50%;
+    margin: 0;
+    font-size: min(20px, 1.672241cqw);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0;
+    transform: translateX(-50%);
+}
+
+.sidebarControl {
+    width: min(20px, 1.672241cqw);
+    height: min(20px, 1.672241cqw);
+    background: #344864;
+    border-radius: 999px;
+}
+
+.sidebarDescription {
+    margin: 0;
+    padding: min(17px, 1.421405cqw) min(18px, 1.505017cqw) min(14px, 1.170569cqw);
+    font-size: min(15px, 1.254181cqw);
+    font-weight: 500;
+    line-height: 1.35;
+    color: #eaeaea;
+}
+
+.chatList {
+    display: flex;
+    flex-direction: column;
+    gap: min(10px, 0.83612cqw);
+    padding: 0 min(14px, 1.170569cqw) min(16px, 1.337793cqw);
+}
+
+.chatMessage {
+    display: grid;
+    grid-template-columns: min(34px, 2.842809cqw) 1fr;
+    gap: min(9px, 0.752508cqw);
+    align-items: start;
+}
+
+.avatar {
+    display: grid;
+    width: min(34px, 2.842809cqw);
+    height: min(34px, 2.842809cqw);
+    font-size: min(14px, 1.170569cqw);
+    font-weight: 700;
+    line-height: 1;
+    color: #111;
+    background: var(--avatar-color);
+    border-radius: 999px;
+    place-items: center;
+}
+
+.messageBody {
+    min-width: 0;
+}
+
+.messageMeta {
+    display: flex;
+    gap: min(6px, 0.501672cqw);
+    align-items: baseline;
+    margin-bottom: min(4px, 0.334448cqw);
+}
+
+.messageMeta span:first-child {
+    font-size: min(14px, 1.170569cqw);
+    font-weight: 700;
+    line-height: 1;
+}
+
+.messageMeta span:last-child {
+    font-size: min(11px, 0.919732cqw);
+    font-weight: 600;
+    line-height: 1;
+    color: #aab6c8;
+}
+
+.messageBody p {
+    margin: 0;
+    padding: min(9px, 0.752508cqw) min(10px, 0.83612cqw);
+    font-size: min(12px, 1.003344cqw);
+    font-weight: 500;
+    line-height: 1.3;
+    color: #eaeaea;
+    background: #344864;
+    border-radius: min(10px, 0.83612cqw);
+}
+
+@media (max-width: 780px) {
+    .title {
+        white-space: normal;
+    }
+
+    .sidebar {
+        top: 37%;
+        right: 4%;
+        width: 38cqw;
+    }
+
+    .sidebarDescription {
+        display: none;
+    }
+
+    .chatList {
+        padding-top: min(12px, 1.003344cqw);
+    }
+}

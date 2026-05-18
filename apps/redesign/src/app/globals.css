@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-instrument-sans), "Instrument Sans", sans-serif;
+  --font-heading: var(--font-sora), "Sora", sans-serif;
+
+  --color-primary: #4C6992;
+  --color-secondary: #D6A845;
+  --color-accent: #C2F003;
+}
+
+@layer base {
+  body {
+    color: #000;
+  }
+  h1, h2 {
+    font-family: var(--font-sora), "Sora", sans-serif;
+  }
+}
+
+.heading-2 {
+    margin: 0;
+    font-family: var(--font-sora), "Sora", sans-serif;
+    font-size: min(55px, 4.18vw);
+    font-weight: 400;
+    line-height: 1.26;
+    letter-spacing: 0;
+    color: #000;
+}

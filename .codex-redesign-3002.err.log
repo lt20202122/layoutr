@@ -1,0 +1,15 @@
+⨯ Another next dev server is already running.
+
+- Local:        http://localhost:3000
+- PID:          9332
+- Dir:          C:\Users\lasse_xwl0mn6\Documents\GitHub\layoutr\apps\redesign
+- Log:          .next\dev\logs\next-development.log
+
+Run taskkill /PID 9332 /F to stop it.
+npm error Lifecycle script `dev` failed with error:
+npm error code 1
+npm error path C:\Users\lasse_xwl0mn6\Documents\GitHub\layoutr\apps\redesign
+npm error workspace redesign@0.1.0
+npm error location C:\Users\lasse_xwl0mn6\Documents\GitHub\layoutr\apps\redesign
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c next dev --port 3002
